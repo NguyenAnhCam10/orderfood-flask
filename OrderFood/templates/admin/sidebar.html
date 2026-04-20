@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Admin Dashboard – Sidebar</title>
+    <link href="{{ url_for('static', filename='css/sidebar.css') }}" rel="stylesheet"/>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar" data-state="expanded">
+    <div class="sb__header">
+        <button class="sb__toggle" id="sbToggle" aria-label="Thu gọn/mở rộng sidebar" title="Thu gọn / Mở rộng">
+            <!-- icon hamburger -->
+            <svg viewBox="0 0 24 24" class="ic">
+                <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" fill="none"
+                      stroke-linecap="round"/>
+            </svg>
+        </button>
+
+        <div class="sb__brand">
+            <!-- icon shield -->
+            <svg viewBox="0 0 24 24" class="ic">
+                <path d="M12 3l7 3v6c0 5-3.5 9-7 9s-7-4-7-9V6l7-3z" fill="currentColor"/>
+            </svg>
+            <span class="sb__title">Admin Dashboard</span>
+        </div>
+    </div>
+
+    <nav class="sb__nav">
+        <!-- Home -->
+        <a class="sb__item" href="{{ url_for('admin.admin_home') }}" data-tooltip="Home">
+        <span class="sb__icon">
+          <svg viewBox="0 0 24 24" class="ic">
+            <path d="M3 11l9-7 9 7v8a2 2 0 0 1-2 2h-4v-6H9v6H5a2 2 0 0 1-2-2v-8z" fill="currentColor"/>
+          </svg>
+        </span>
+            <span class="sb__text">Home</span>
+        </a>
+
+        <!-- Quản lý nhà hàng -->
+        <a class="sb__item" href="{{ url_for('admin.admin_restaurant') }}" data-tooltip="Quản lý nhà hàng">
+        <span class="sb__icon">
+          <svg viewBox="0 0 24 24" class="ic">
+            <path d="M3 10h18v10H3zM4 6h4v4H4zM10 6h4v4h-4zM16 6h4v4h-4z" fill="currentColor"/>
+          </svg>
+        </span>
+            <span class="sb__text">Quản lý nhà hàng</span>
+        </a>
+
+        <!-- Quản lý người dùng -->
+        <a class="sb__item" href="{{ url_for('admin.manage_user') }}" data-tooltip="Quản lý người dùng">
+        <span class="sb__icon">
+          <svg viewBox="0 0 24 24" class="ic">
+            <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm-7 8a7 7 0 0 1 14 0z" fill="currentColor"/>
+          </svg>
+        </span>
+            <span class="sb__text">Quản lý người dùng</span>
+        </a>
+        <a class="sb__item" href="{{ url_for('admin.admin_delivery') }}" data-tooltip="Quản lý giao hàng">
+  <span class="sb__icon">
+    <svg viewBox="0 0 24 24" class="ic">
+      <path d="M3 6h13v6h5l-2 6H3zM6 18a2 2 0 1 0 2 2 2 2 0 0 0-2-2zm10 0a2 2 0 1 0 2 2 2 2 0 0 0-2-2z"
+            fill="currentColor"/>
+    </svg>
+  </span>
+            <span class="sb__text">Quản lý giao hàng</span>
+        </a>
+        <a class="sb__item" href="{{ url_for('admin.admin_logout') }}" data-tooltip="Đăng xuất">
+        <span class="sb__icon">
+          <svg viewBox="0 0 24 24" class="ic">
+            <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h8v-2H4z"
+                  fill="currentColor"/>
+          </svg>
+        </span>
+            <span class="sb__text">Đăng xuất</span>
+        </a>
+    </nav>
+</aside>
+<script>
+    (function () {
+      const sidebar = document.querySelector('.sidebar');
+      const toggle  = document.getElementById('sbToggle');
+
+      function setState(state) {
+        sidebar.setAttribute('data-state', state);
+        // lưu trạng thái vào localStorage để nhớ giữa các trang
+        try { localStorage.setItem('sidebar_state', state); } catch(e) {}
+      }
+
+      // khởi tạo từ localStorage
+      try {
+        const saved = localStorage.getItem('sidebar_state');
+        if (saved === 'collapsed' || saved === 'expanded') setState(saved);
+      } catch(e) {}
+
+      toggle.addEventListener('click', () => {
+        const cur = sidebar.getAttribute('data-state');
+        setState(cur === 'expanded' ? 'collapsed' : 'expanded');
+      });
+    })();
+
+
+</script>
+</body>
+</html>

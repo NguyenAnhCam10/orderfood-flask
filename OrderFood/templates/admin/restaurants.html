@@ -1,0 +1,81 @@
+{% include "/admin/sidebar.html" %}
+<head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/listRestaurant.css') }}"/>
+    <style>
+        .rs-row:hover { box-shadow: 0 8px 24px rgba(0,0,0,.12); }
+        .rs-col--action,
+        .rs-action { position: relative; z-index: 2; }
+        .rs-row { cursor: pointer; }
+    </style>
+</head>
+
+<main class="page">
+  <div class="container-fluid mt-4">
+    <h2 class="mb-4">Danh sách Nhà hàng</h2>
+
+    <table class="rs-table table table-hover align-middle">
+      <thead class="rs-thead">
+        <tr class="rs-row-head">
+          <th>ID</th>
+          <th>Tên nhà hàng</th>
+          <th>Địa chỉ</th>
+          <th>Trạng thái</th>
+          <th>Đánh giá</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody class="rs-body">
+        {% for r in restaurants %}
+        <tr class="rs-row"
+            onclick="window.location='{{ url_for('admin.restaurant_detail', restaurant_id=r.restaurant_id) }}'">
+          <td>#{{ r.restaurant_id }}</td>
+          <td>
+            <div class="rs-card">
+              <div class="rs-info">
+                <div class="rs-title">{{ r.name }}</div>
+                {% if r.owner and r.owner.user %}
+                <div class="rs-sub">Owner: {{ r.owner.user.email }}</div>
+                {% endif %}
+              </div>
+            </div>
+          </td>
+          <td>{{ r.address or "—" }}</td>
+          <td>
+            {% if r.status %}
+              <span class="rs-badge rs-badge--{{ 'ok' if r.status.value=='APPROVED'
+                                   else 'warn' if r.status.value=='PENDING'
+                                   else 'err' }}">{{ r.status.value }}</span>
+            {% endif %}
+          </td>
+          <td>{{ "{:.1f}".format(r.rating_point) if r.rating_point else "Không" }}🌟</td>
+          <td>
+            {% if r.status and r.status.value == 'PENDING' %}
+              <button type="button"
+                      class="rs-action rs-action--approve"
+                      title="Approve"
+                      data-id="{{ r.restaurant_id }}"
+                      onclick="event.stopPropagation();">✅</button>
+              <button type="button"
+                      class="rs-action rs-action--reject"
+                      title="Reject"
+                      data-id="{{ r.restaurant_id }}"
+                      onclick="event.stopPropagation();">❌</button>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="6" class="text-center text-muted py-4">Không có nhà hàng nào.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div id="toast-stack"></div>
+    {% if noti_assets is defined %}
+      {{ noti_assets() }}
+    {% endif %}
+    <script src="{{ url_for('static', filename='js/toast.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/admin/manageRestaurant.js') }}?v=3"></script>
+  </div>
+</main>
