@@ -7,7 +7,8 @@ from sqlalchemy import Enum as SAEnum, String, Index
 from sqlalchemy import UniqueConstraint
 from sqlalchemy.ext.hybrid import hybrid_property
 
-from OrderFood import db
+# from OrderFood import db
+from OrderFood.extensions import db
 from flask_login import UserMixin
 
 

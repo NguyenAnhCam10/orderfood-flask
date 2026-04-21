@@ -2,13 +2,16 @@
 import os, traceback
 from flask import render_template, request, redirect, url_for, flash, session, jsonify, current_app
 from werkzeug.security import generate_password_hash, check_password_hash
-from OrderFood import app, db
+# from OrderFood import app, db
+from flask import Blueprint
+# from OrderFood import db
+from OrderFood.extensions import db
 from OrderFood.customer_service import PHONE_RE, get_user_by_phone
 from OrderFood.dao import *
 from OrderFood.dao_index import get_restaurants_by_name, get_restaurants_by_dishes_name, get_star_display, \
     get_user_by_email, create_user, get_active_cart, add_cart_item, count_cart_items
 from OrderFood.models import Restaurant, Customer, Cart, StatusCart, Role
-
+bp = Blueprint("index", __name__)
 # --- Helpers ---
 ENUM_UPPERCASE = True
 def norm_role_for_db(role: str) -> str:
@@ -25,7 +28,7 @@ def is_owner(role: str) -> bool:
     return (rolestr or "").lower() == "restaurant_owner"
 
 # --- Routes ---
-@app.route("/")
+@bp.route("/")
 def index():
     role = session.get("role")
     if role and role.lower() == "admin":
@@ -73,7 +76,7 @@ def index():
         total=total,
     )
 
-@app.route("/register", methods=["GET", "POST"])
+@bp.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
         form = request.form  # giữ lại để render khi lỗi
@@ -133,7 +136,7 @@ def register():
     return render_template("auth.html", panel="signup")
 
 
-@app.route("/login", methods=["GET", "POST"])
+@bp.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
         email = request.form.get("email", "").strip().lower()
@@ -157,14 +160,14 @@ def login():
 
     return render_template("auth.html")
 
-@app.route("/logout")
+@bp.route("/logout")
 def logout():
     session.clear()
     flash("Đã đăng xuất", "info")
     return redirect(url_for("index"))
 
 # --- Cart API ---
-@app.route('/api/cart', methods=['POST'])
+@bp.route('/api/cart', methods=['POST'])
 def add_to_cart_route():
     try:
         data = request.get_json()
@@ -199,7 +202,7 @@ def add_to_cart_route():
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
-@app.route("/cart/<int:restaurant_id>")
+@bp.route("/cart/<int:restaurant_id>")
 def cart_route(restaurant_id):
     user_id = session.get("user_id")
     if not user_id:
@@ -217,4 +220,4 @@ def cart_route(restaurant_id):
 # deploy thì bỏ nguyên cái if này đi
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    bp.run(host="0.0.0.0", port=5000, debug=True)

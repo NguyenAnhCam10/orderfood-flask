@@ -9,9 +9,9 @@
        href="{% if r == 'restaurant_owner' %}
                 {{ url_for('owner.owner_home') }}
               {% elif r == 'customer' %}
-                {{ url_for('index') }}
+                {{ url_for('index.index') }}
               {% else %}
-                {{ url_for('index') }}
+                {{ url_for('index.index') }}
               {% endif %}">
       <img src="{{ url_for('static', filename='img/chef.jpg') }}"
            alt="Logo"
@@ -28,7 +28,7 @@
       <!-- Left nav -->
       <ul class="navbar-nav me-auto">
         {% if r == 'customer' %}
-          <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}">Trang chủ</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('index.index') }}">Trang chủ</a></li>
         {% elif r == 'restaurant_owner' %}
           {% if restaurant and restaurant.status.name == "APPROVED" %}
             <li class="nav-item"><a class="nav-link" href="{{ url_for('owner.get_menu') }}">Chỉnh sửa món ăn</a></li>
@@ -45,7 +45,7 @@
       <!-- Right side -->
       <div class="d-flex align-items-center">
         {% if not session.get('user_id') %}
-          <a class="btn btn-outline-light me-2" href="{{ url_for('login') }}">Đăng nhập</a>
+          <a class="btn btn-outline-light me-2" href="{{ url_for('index.login') }}">Đăng nhập</a>
         {% else %}
 
           {# Chuông thông báo cho customer/owner #}
@@ -94,7 +94,7 @@
                 <li><a class="dropdown-item" href="{{ url_for('admin.admin_home') }}">Trang admin</a></li>
               {% endif %}
 
-              <li><a class="dropdown-item text-danger" href="{{ url_for('logout') }}">Đăng xuất</a></li>
+              <li><a class="dropdown-item text-danger" href="{{ url_for('index.logout') }}">Đăng xuất</a></li>
             </ul>
           </div>
 

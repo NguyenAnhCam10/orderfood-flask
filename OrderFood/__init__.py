@@ -7,16 +7,17 @@ from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
 from flask import Flask
 from flask_mail import Mail
-from flask_sqlalchemy import SQLAlchemy
+# from flask_sqlalchemy import SQLAlchemy
+from OrderFood.extensions import db
 from werkzeug.security import generate_password_hash
-
+from OrderFood.index import bp as index_bp
 from OrderFood.helper.NotiHelper import init_app as init_noti
 
 # ================== Load .env ==================
 load_dotenv()
 
 # ================== Global extensions ==================
-db = SQLAlchemy()
+# db = SQLAlchemy()
 mail = Mail()
 oauth = OAuth()
 scheduler = BackgroundScheduler(timezone="Asia/Ho_Chi_Minh", daemon=True)
@@ -54,6 +55,7 @@ PRESERVE_TRANSACTIONS = os.getenv("PRESERVE_TRANSACTIONS", "true").lower() == "t
 
 
 def create_app():
+
     app = Flask(__name__)
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret")
     app.config["SQLALCHEMY_DATABASE_URI"] = SQLALCHEMY_DATABASE_URI
@@ -74,7 +76,7 @@ def create_app():
     app.register_blueprint(owner_bp)
 
     app.register_blueprint(bp_stats)
-
+    app.register_blueprint(index_bp)
     # Cloudinary (theo .env)
     cloudinary.config(
         cloud_name=CLOUDINARY_CLOUD_NAME,
@@ -367,9 +369,9 @@ def create_app():
             _SCHEDULER_STARTED = True
             print("[SCHED] started")
         # ---- END SCHEDULER ----
-
+    # import OrderFood.index
     return app
 
 
 app = create_app()
-import OrderFood.index
+
