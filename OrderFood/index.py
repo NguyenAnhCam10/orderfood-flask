@@ -131,7 +131,7 @@ def register():
         session["role"] = (getattr(user.role, "value", user.role) or "").lower()
 
         flash("Đăng ký thành công! Bạn đã được đăng nhập.", "success")
-        return redirect(url_for("owner.owner_home") if is_owner(user.role) else url_for("index"))
+        return redirect(url_for("owner.owner_home") if is_owner(user.role) else url_for("index.index"))
 
     return render_template("auth.html", panel="signup")
 
@@ -142,9 +142,9 @@ def login():
         email = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "")
         user = get_user_by_email(email)
-        if not user or not check_password_hash(user.password, password):
+        if not user or not user.password or not check_password_hash(user.password, password):
             flash("Tài khoản hoặc mật khẩu không chính xác.", "danger")
-            return redirect(url_for("login"))
+            return redirect(url_for("index.login"))
 
         session["user_id"] = user.user_id
         session["user_email"] = user.email
@@ -156,7 +156,7 @@ def login():
         elif user.role == Role.ADMIN:
             return redirect(url_for("admin.admin_home"))
         else:
-            return redirect(url_for("index"))
+            return redirect(url_for("index.index"))
 
     return render_template("auth.html")
 
@@ -164,7 +164,7 @@ def login():
 def logout():
     session.clear()
     flash("Đã đăng xuất", "info")
-    return redirect(url_for("index"))
+    return redirect(url_for("index.index"))
 
 # --- Cart API ---
 @bp.route('/api/cart', methods=['POST'])

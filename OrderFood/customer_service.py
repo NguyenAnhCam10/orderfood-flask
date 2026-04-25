@@ -190,7 +190,7 @@ def my_orders():
 @customer_bp.route("/customer")
 def customer_home():
     if not is_customer(session.get("role")):
-        return redirect(url_for("login"))
+        return redirect(url_for("index.login"))
 
     restaurants = dao_cus.list_top_restaurants(limit=50)
     restaurants_with_stars = [
@@ -297,7 +297,7 @@ def profile_page():
     uid = session.get("user_id")
     role = session.get("role")
     if not uid or not is_customer_or_owner(role):
-        return redirect(url_for("login"))
+        return redirect(url_for("index.login"))
 
     user = User.query.get(uid)
     return render_template("customer/profile.html", user=user, role=role)
@@ -310,7 +310,7 @@ def profile_update():
     uid = session.get("user_id")
     role = session.get("role")
     if not uid or not is_customer_or_owner(role):
-        return redirect(url_for("login"))
+        return redirect(url_for("index.login"))
 
     user = User.query.get(uid)
     name    = (request.form.get("name") or "").strip()
@@ -345,7 +345,7 @@ def profile_change_password():
     uid = session.get("user_id")
     role = session.get("role")
     if not uid or not is_customer_or_owner(role):
-        return redirect(url_for("login"))
+        return redirect(url_for("index.login"))
 
     user = User.query.get(uid)
     old_pw = request.form.get("old_password") or ""
@@ -363,12 +363,12 @@ def profile_change_password():
         return redirect(url_for("customer.profile_page"))
     if new_pw != confirm:
         flash("Xác nhận mật khẩu không khớp.", "warning")
-        return redirect(url_for("customer.profile"))
+        return redirect(url_for("customer.profile_page"))
 
     user.password = generate_password_hash(new_pw)
     db.session.commit()
     flash("Đổi mật khẩu thành công.", "success")
-    return redirect(url_for("customer.profile"))
+    return redirect(url_for("customer.profile_page"))
 import cloudinary.uploader
 
 @customer_bp.route("/profile/avatar", methods=["POST"])
@@ -376,7 +376,7 @@ def profile_upload_avatar():
     uid = session.get("user_id")
     role = session.get("role")
     if not uid or not is_customer_or_owner(role):
-        return redirect(url_for("login"))
+        return redirect(url_for("index.login"))
 
     file = request.files.get("avatar")
     if not file or file.filename == "":

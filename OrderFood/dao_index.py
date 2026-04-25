@@ -19,11 +19,16 @@ def get_user_by_id(user_id):
     return User.query.get(user_id)
 
 def create_user(name, email, phone, hashed_password, role: str):
-    u = User(name=name, email=email, phone=phone, password=hashed_password, role=_norm_role(role))
+    normalized_role = _norm_role(role)
+    u = User(name=name, email=email, phone=phone, password=hashed_password, role=normalized_role)
     try:
         db.session.add(u)
         db.session.commit()
-        if role.upper() == "RESTAURANT_OWNER":
+        if normalized_role == "CUSTOMER":
+            customer = Customer(user_id=u.user_id)
+            db.session.add(customer)
+            db.session.commit()
+        elif normalized_role == "RESTAURANT_OWNER":
             owner = RestaurantOwner(user_id=u.user_id, tax=None)
             db.session.add(owner)
             db.session.commit()

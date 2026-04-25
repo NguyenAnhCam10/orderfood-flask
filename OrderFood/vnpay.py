@@ -39,7 +39,7 @@ def checkout_vnpay(restaurant_id=None):
     user_id = session.get("user_id")
     if not user_id:
         flash("Bạn cần đăng nhập trước khi thanh toán.", "warning")
-        return redirect(url_for("login", next=request.url))
+        return redirect(url_for("index.login", next=request.url))
 
     # ===== Xác định restaurant_id (rid) =====
     rid = restaurant_id or request.args.get("restaurant_id", type=int)
@@ -60,7 +60,7 @@ def checkout_vnpay(restaurant_id=None):
     total_price = sum((ci.quantity or 0) * (ci.dish.price or 0) for ci in cart.items)
     if total_price <= 0:
         flash("Tổng tiền không hợp lệ.", "danger")
-        return redirect(url_for("cart", restaurant_id=rid))
+        return redirect(url_for("index.cart_route", restaurant_id=rid))
     waiting_time = current_app.config.get("WAITING_TIME", 10)
     amount_vnp = int(total_price) * 100  # VNPay cần VND x 100
 
@@ -115,7 +115,7 @@ def checkout_vnpay(restaurant_id=None):
         db.session.rollback()
         current_app.logger.exception("checkout_vnpay failed: %s", ex)
         flash("Có lỗi khi tạo giao dịch. Vui lòng thử lại.", "danger")
-        return redirect(url_for("restaurant_detail", restaurant_id=rid))
+        return redirect(url_for("customer.restaurant_detail", restaurant_id=rid))
 
     # ===== Sinh URL VNPay dùng txn_ref mới =====
     client_ip = (request.headers.get("X-Forwarded-For") or request.remote_addr or "127.0.0.1").split(",")[0].strip()
@@ -152,7 +152,7 @@ def vnpay_return():
     payment = Payment.query.filter_by(txn_ref=txn_ref).first()   # ✅ tra theo txn_ref
     if not payment:
         flash("Không tìm thấy giao dịch.", "danger")
-        return redirect(url_for("index"))
+        return redirect(url_for("index.index"))
 
     order = Order.query.get_or_404(payment.order_id)
 
@@ -163,7 +163,7 @@ def vnpay_return():
         vnp_amount = 0
     if vnp_amount and vnp_amount != int(payment.amount):
         flash("Số tiền giao dịch không khớp.", "danger")
-        return redirect(url_for("index"))
+        return redirect(url_for("index.index"))
 
     if valid and params.get("vnp_ResponseCode") == "00":
         just_marked = False

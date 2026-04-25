@@ -29,7 +29,7 @@ def admin_home():
     current_year = datetime.now().year
     if not is_admin(session.get("role")):
         flash("Bạn không có quyền truy cập trang admin", "danger")
-        return redirect(url_for("index"))
+        return redirect(url_for("index.index"))
     return render_template("admin/admin_home.html", current_year=current_year)
 
 
@@ -37,7 +37,7 @@ def admin_home():
 def admin_logout():
     session.clear()
     flash("Đã đăng xuất", "info")
-    return redirect(url_for("index"))
+    return redirect(url_for("index.index"))
 
 
 @admin_bp.route("/restaurants")
@@ -50,7 +50,7 @@ def admin_restaurant():
 def restaurant_detail(restaurant_id: int):
     if not is_admin(session.get("role")):
         flash("Bạn không có quyền truy cập trang admin", "danger")
-        return redirect(url_for("index"))
+        return redirect(url_for("index.index"))
 
     res = get_restaurant_by_id(restaurant_id)
     if not res:
@@ -122,7 +122,7 @@ def approve_restaurant(restaurant_id: int):
 def admin_delivery():
     if not is_admin(session.get("role")):
         flash("Bạn không có quyền truy cập trang admin", "danger")
-        return redirect(url_for("index"))
+        return redirect(url_for("index.index"))
 
     orders = (
         Order.query
