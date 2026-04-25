@@ -26,7 +26,7 @@
         <tr data-id="{{ item.cart_item_id }}">
           <td>{{ loop.index }}</td>
           <td>{{ item.dish.name }}</td>
-          <td>{{ "{:,.0f}".format(item.dish.price) }} đ</td>
+          <td>{{ item.dish.price|vnd }}</td>
           <td>
             <input type="number" min="1" value="{{ item.quantity }}"
                    class="cart-qty-input form-control"
@@ -37,7 +37,7 @@
                    class="cart-note-input form-control"
                    data-id="{{ item.cart_item_id }}">
           </td>
-          <td class="cart-subtotal">{{ "{:,.0f}".format(item.quantity * item.dish.price) }} đ</td>
+          <td class="cart-subtotal">{{ (item.quantity * item.dish.price)|vnd }}</td>
           <td>
             <button class="btn btn-sm btn-danger delete-cart-item"
                     data-id="{{ item.cart_item_id }}">Xóa</button>
@@ -48,7 +48,7 @@
       <tfoot>
         <tr>
           <td colspan="5" class="text-end fw-bold">Tổng cộng:</td>
-          <td colspan="2" id="cart-total">{{ "{:,.0f}".format(total_price) }} đ</td>
+          <td colspan="2" id="cart-total">{{ total_price|vnd }}</td>
         </tr>
       </tfoot>
     </table>

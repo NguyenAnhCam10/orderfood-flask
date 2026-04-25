@@ -40,7 +40,7 @@
                     {{ o.customer.user.email if o.customer and o.customer.user else "—" }}
                 </td>
                 <td class="rs-col">{{ o.restaurant.name if o.restaurant else "—" }}</td>
-                <td class="rs-col">{{ "{:,.0f}".format(o.total_price) }} đ</td>
+                <td class="rs-col">{{ o.total_price|vnd }}</td>
                 <td class="rs-col">
   <span class="rs-badge rs-badge--{{
       'ok' if o.status.value=='APPROVED'
