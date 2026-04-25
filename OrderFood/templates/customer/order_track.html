@@ -50,7 +50,7 @@
             <h6 class="text-muted mb-1">Thông tin đơn</h6>
             <p class="mb-0">
               Nhà hàng: <strong>{{ order.restaurant.name if order.restaurant else '—' }}</strong><br>
-              Tổng tiền: <strong>{{ "{:,.0f}".format(order.total_price or 0) }} đ</strong><br>
+              Tổng tiền: <strong>{{ order.total_price|vnd }}</strong><br>
               Tạo lúc: <strong>{{ order.created_date }}</strong>
             </p>
           </div>

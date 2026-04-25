@@ -62,7 +62,7 @@
                 <td>
                   {{ od.restaurant.name if od.restaurant else '—' }}
                 </td>
-                <td>{{ "{:,.0f}".format(od.total_price or 0) }} đ</td>
+                <td>{{ od.total_price|vnd }}</td>
                 <td>{{ od.created_date }}</td>
                 <td><span class="badge bg-{{ badge }}">
                   {% if s=='PENDING' %}Chờ thanh toán

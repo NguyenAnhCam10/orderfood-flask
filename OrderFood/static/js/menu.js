@@ -1,3 +1,8 @@
+function formatVnd(value) {
+    const amount = Math.round(Number(value) || 0);
+    return amount.toLocaleString('vi-VN') + 'đ';
+}
+
 async function addDish() {
     const addDishForm = document.getElementById('addDishForm');
 
@@ -59,7 +64,7 @@ async function addDish() {
                     newRow.innerHTML = `
                         <td class="text-center">${dish.name}</td>
                         <td class="text-center text-truncate" style="max-width:150px;">${dish.note || "Chưa có mô tả"}</td>
-                        <td class="text-center">${dish.price}đ</td>
+                        <td class="text-center">${formatVnd(dish.price)}</td>
                         <td class="text-center">${dish.category || '-'}</td>
                         <td class="text-center">
                             <button type="submit" class="btn btn-danger btn-sm middle">Xóa</button>
@@ -237,7 +242,7 @@ editDishForm.addEventListener('submit', async function(e) {
                 row.innerHTML = `
                     <td class="text-center">${dish.name}</td>
                     <td class="text-center text-truncate" style="max-width:150px;">${dish.note || "Chưa có mô tả"}</td>
-                    <td class="text-center">${dish.price}đ</td>
+                    <td class="text-center">${formatVnd(dish.price)}</td>
                     <td class="text-center">${dish.category || '-'}</td>
                     <td class="text-center">
                         <button type="submit" class="btn btn-danger btn-sm middle">Xóa</button>

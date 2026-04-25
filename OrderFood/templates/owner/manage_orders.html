@@ -55,7 +55,7 @@
                 <li class="list-group-item">
                     <div class="d-flex justify-content-between align-items-center">
                        <span>
-                           Đơn #{{ order.order_id }} - {{ order.customer.user.name }} - {{ order.total_price }} VNĐ
+                           Đơn #{{ order.order_id }} - {{ order.customer.user.name }} - {{ order.total_price|vnd }}
                        </span>
                         <button class="btn btn-sm btn-info" data-bs-toggle="collapse"
                                 data-bs-target="#order-detail-{{ order.order_id }}">
@@ -71,7 +71,7 @@
                             - {{ item.dish.name }} x {{ item.quantity }}<br>
                             {% endfor %}
                         </p>
-                        <p><strong>Tổng tiền:</strong> {{ order.total_price }} VNĐ</p>
+                        <p><strong>Tổng tiền:</strong> {{ order.total_price|vnd }}</p>
 
 
                         <button type="button" class="btn btn-success btn-sm approve-order-btn "
@@ -111,7 +111,7 @@
                 {% for order in approved_orders %}
                 <li class="list-group-item">
                     <div>
-                        Đơn #{{ order.order_id }} - {{ order.customer.user.name }} - {{ order.total_price }} VNĐ
+                        Đơn #{{ order.order_id }} - {{ order.customer.user.name }} - {{ order.total_price|vnd }}
                     </div>
                     <div style="margin-top: 5px;">
                         <strong>Sản phẩm:</strong><br>

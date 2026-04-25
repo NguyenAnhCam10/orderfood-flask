@@ -121,6 +121,16 @@ class Admin(db.Model):
 # =========================
 # RESTAURANT
 # =========================
+class RestaurantCategory(db.Model):
+    __tablename__ = "restaurant_category"
+
+    restaurant_category_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    name = db.Column(db.String(100), nullable=False, unique=True)
+    slug = db.Column(db.String(100), nullable=False, unique=True, index=True)
+
+    restaurants = db.relationship("Restaurant", back_populates="restaurant_category")
+
+
 class Restaurant(db.Model):
     __tablename__ = "restaurant"
 
@@ -141,6 +151,12 @@ class Restaurant(db.Model):
     image = db.Column(String(255))
     # null khi chưa duyệt
     by_admin_id = db.Column(db.Integer, db.ForeignKey("admin.user_id"), nullable=True)
+    restaurant_category_id = db.Column(
+        db.Integer,
+        db.ForeignKey("restaurant_category.restaurant_category_id"),
+        nullable=True,
+        index=True,
+    )
     address = db.Column(db.String(255))
     rating_point = db.Column(db.Float, default=0.0)
     is_open = db.Column(db.Boolean, default=False, nullable=False)
@@ -148,6 +164,7 @@ class Restaurant(db.Model):
 
     owner = db.relationship("RestaurantOwner", back_populates="restaurant")
     approved_by = db.relationship("Admin", back_populates="restaurants_approved")
+    restaurant_category = db.relationship("RestaurantCategory", back_populates="restaurants")
 
 
 # =========================

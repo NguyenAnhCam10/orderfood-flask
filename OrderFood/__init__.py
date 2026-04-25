@@ -60,6 +60,15 @@ def create_app():
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret")
     app.config["SQLALCHEMY_DATABASE_URI"] = SQLALCHEMY_DATABASE_URI
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = SQLALCHEMY_TRACK_MODIFICATIONS
+
+    @app.template_filter("vnd")
+    def format_vnd(value):
+        try:
+            amount = int(round(float(value or 0)))
+        except (TypeError, ValueError):
+            amount = 0
+        return f"{amount:,}".replace(",", ".") + "đ"
+
     from OrderFood.vnpay import vnpay_bp
     from OrderFood.google_service import google_auth_bp
     from OrderFood import admin_service

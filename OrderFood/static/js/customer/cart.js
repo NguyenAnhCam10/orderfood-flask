@@ -1,9 +1,17 @@
+function formatVnd(value) {
+    const amount = Math.round(Number(value) || 0);
+    return amount.toLocaleString('vi-VN') + 'đ';
+}
+
+function parseVnd(value) {
+    return Number(String(value || '').replace(/[^\d]/g, '')) || 0;
+}
 
 function openDishModal(dish_id, name, image, price, note, restaurant_id) {
     // Điền dữ liệu vào modal
     document.getElementById("dishModalTitle").textContent = name;
     document.getElementById("dishModalImage").src = image || 'https://via.placeholder.com/120x120?text=No+Image';
-    document.getElementById("dishModalPrice").textContent = price;
+    document.getElementById("dishModalPrice").textContent = formatVnd(price);
     document.getElementById("dishModalNote").textContent = note || '';
     document.getElementById("dishModalQty").value = 1;
     document.getElementById("dishModalUserNote").value = '';
@@ -124,8 +132,8 @@ function updateCartItem(itemId, quantity, note, row) {
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            row.querySelector('.cart-subtotal').textContent = data.subtotal.toLocaleString('vi-VN') + ' đ';
-            document.getElementById('cart-total').textContent = data.total.toLocaleString('vi-VN') + ' đ';
+            row.querySelector('.cart-subtotal').textContent = formatVnd(data.subtotal);
+            document.getElementById('cart-total').textContent = formatVnd(data.total);
         } else alert(data.error || "Có lỗi khi cập nhật sản phẩm");
     }).catch(err => console.error(err));
 }
@@ -143,9 +151,9 @@ function deleteCartItem(itemId, row) {
             // Update tổng giá
             let total = 0;
             document.querySelectorAll('.cart-subtotal').forEach(cell => {
-                total += parseFloat(cell.textContent.replace(/[^0-9.-]+/g,""));
+                total += parseVnd(cell.textContent);
             });
-            document.getElementById('cart-total').textContent = total.toLocaleString('vi-VN') + ' đ';
+            document.getElementById('cart-total').textContent = formatVnd(total);
             console.log(data.redirect_url);
 
             // Redirect nếu giỏ hàng trống
