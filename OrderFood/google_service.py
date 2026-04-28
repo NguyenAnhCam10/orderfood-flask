@@ -14,9 +14,9 @@ def _after_login_redirect():
     # ưu tiên ?next=..., fallback về trang chủ
     nxt = request.args.get("next") or session.pop("next", None)
     try:
-        return redirect(nxt) if nxt else redirect(url_for("index"))
+        return redirect(nxt) if nxt else redirect(url_for("index.index"))
     except Exception:
-        return redirect(url_for("index"))
+        return redirect(url_for("index.index"))
 
 @google_auth_bp.route("/login/google")
 def login_google():

@@ -131,7 +131,7 @@ def register():
         session["role"] = (getattr(user.role, "value", user.role) or "").lower()
 
         flash("Đăng ký thành công! Bạn đã được đăng nhập.", "success")
-        return redirect(url_for("owner.owner_home") if is_owner(user.role) else url_for("index"))
+        return redirect(url_for("owner.owner_home") if is_owner(user.role) else url_for("index.index"))
 
     return render_template("auth.html", panel="signup")
 
@@ -156,7 +156,7 @@ def login():
         elif user.role == Role.ADMIN:
             return redirect(url_for("admin.admin_home"))
         else:
-            return redirect(url_for("index"))
+            return redirect(url_for("index.index"))
 
     return render_template("auth.html")
 
@@ -164,7 +164,7 @@ def login():
 def logout():
     session.clear()
     flash("Đã đăng xuất", "info")
-    return redirect(url_for("index"))
+    return redirect(url_for("index.index"))
 
 # --- Cart API ---
 @bp.route('/api/cart', methods=['POST'])

@@ -152,7 +152,7 @@ def vnpay_return():
     payment = Payment.query.filter_by(txn_ref=txn_ref).first()   # ✅ tra theo txn_ref
     if not payment:
         flash("Không tìm thấy giao dịch.", "danger")
-        return redirect(url_for("index"))
+        return redirect(url_for("index.index"))
 
     order = Order.query.get_or_404(payment.order_id)
 
@@ -163,7 +163,7 @@ def vnpay_return():
         vnp_amount = 0
     if vnp_amount and vnp_amount != int(payment.amount):
         flash("Số tiền giao dịch không khớp.", "danger")
-        return redirect(url_for("index"))
+        return redirect(url_for("index.index"))
 
     if valid and params.get("vnp_ResponseCode") == "00":
         just_marked = False
