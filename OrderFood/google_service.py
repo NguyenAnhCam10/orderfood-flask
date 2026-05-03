@@ -41,7 +41,7 @@ def google_callback():
 
     if not userinfo or "email" not in userinfo:
         flash("Không lấy được thông tin Google", "danger")
-        return redirect(url_for("login"))
+        return redirect(url_for("index.login"))
 
     email = userinfo["email"].lower()
     display_name = userinfo.get("name") or userinfo.get("given_name") or email.split("@")[0]

@@ -142,9 +142,9 @@ def login():
         email = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "")
         user = get_user_by_email(email)
-        if not user or not check_password_hash(user.password, password):
+        if not user or not user.password or not check_password_hash(user.password, password):
             flash("Tài khoản hoặc mật khẩu không chính xác.", "danger")
-            return redirect(url_for("login"))
+            return redirect(url_for("index.login"))
 
         session["user_id"] = user.user_id
         session["user_email"] = user.email

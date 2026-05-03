@@ -20,10 +20,10 @@ def is_owner(role):
 @owner_bp.route("/")
 def owner_home():
     if not is_owner(session.get("role")):
-        return redirect(url_for("login"))
+        return redirect(url_for("index.login"))
     user_id = session.get("user_id")
     if not user_id:
-        return redirect(url_for("login"))
+        return redirect(url_for("index.login"))
     user = User.query.get(user_id)
     restaurant = None
     if user and user.restaurant_owner:
@@ -35,7 +35,7 @@ def owner_home():
 def get_menu():
     user_id = session.get("user_id")
     if not user_id:
-        return redirect(url_for("login"))
+        return redirect(url_for("index.login"))
     keyword = (request.args.get('keyword') or '').strip()
     if not keyword:
         dishes = load_menu_owner(user_id)
@@ -51,7 +51,7 @@ def add_dish():
     user_id = session.get("user_id")
     user = User.query.get(user_id)
     if not user_id:
-        return redirect(url_for("login"))
+        return redirect(url_for("index.login"))
 
     if not user or not user.restaurant_owner or not user.restaurant_owner.restaurant:
         return jsonify({"success": False, "error": "Bạn chưa có nhà hàng"})
@@ -181,7 +181,7 @@ def manage_orders():
     user = User.query.get(user_id)
 
     if not user_id:
-        return redirect(url_for("login"))
+        return redirect(url_for("index.login"))
 
     if not user or not user.restaurant_owner or not user.restaurant_owner.restaurant:
         return jsonify({"success": False, "error": "Bạn chưa có nhà hàng"})
@@ -258,7 +258,7 @@ def cancel_order(order_id):
 def manage_restaurant():
     user_id = session.get("user_id")
     if not user_id or not is_owner(session.get("role")):
-        return redirect(url_for("login"))
+        return redirect(url_for("index.login"))
 
     user = User.query.get(user_id)
     if not user or not user.restaurant_owner or not user.restaurant_owner.restaurant:
