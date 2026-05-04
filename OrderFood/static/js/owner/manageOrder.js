@@ -1,5 +1,10 @@
 (function () {
 
+  function formatVnd(value) {
+    const amount = Math.round(Number(value) || 0);
+    return amount.toLocaleString("vi-VN") + "đ";
+  }
+
   function findRow(el) {
     return el.closest("li.list-group-item") || el.closest("tr");
   }
@@ -41,7 +46,7 @@
         let itemsHTML = "";
         if (data.items) itemsHTML = data.items.map(i => `- ${i.name} x ${i.quantity}`).join("<br>");
         li.innerHTML = `
-          <div>Đơn #${data.order_id} - ${data.customer_name} - ${data.total_price} VNĐ</div>
+          <div>Đơn #${data.order_id} - ${data.customer_name} - ${formatVnd(data.total_price)}</div>
           <div style="margin-top: 5px;">
             <strong>Sản phẩm:</strong><br>${itemsHTML}
           </div>

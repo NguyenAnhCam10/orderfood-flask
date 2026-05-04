@@ -38,8 +38,8 @@ document.addEventListener("DOMContentLoaded", () => {
         fetch(`/api/owner/${restaurantId}/stats/revenue`)
             .then(res => res.json())
             .then(data => {
-                document.getElementById("revenue-today").textContent = data.today.toLocaleString() + " đ";
-                document.getElementById("revenue-month").textContent = data.month.toLocaleString() + " đ";
+                document.getElementById("revenue-today").textContent = data.today.toLocaleString("vi-VN") + "đ";
+                document.getElementById("revenue-month").textContent = data.month.toLocaleString("vi-VN") + "đ";
             });
     }
 
@@ -97,7 +97,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 beginAtZero: true,
                                 ticks: {
                                     callback: function (value) {
-                                        return value.toLocaleString() + " đ";
+                                        return value.toLocaleString("vi-VN") + "đ";
                                     }
                                 }
                             }

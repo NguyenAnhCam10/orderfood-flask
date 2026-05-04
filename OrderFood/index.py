@@ -10,7 +10,8 @@ from OrderFood.customer_service import PHONE_RE, get_user_by_phone
 from OrderFood.dao import *
 from OrderFood.dao_index import get_restaurants_by_name, get_restaurants_by_dishes_name, get_star_display, \
     get_user_by_email, create_user, get_active_cart, add_cart_item, count_cart_items
-from OrderFood.models import Restaurant, Customer, Cart, StatusCart, Role
+from OrderFood.models import Restaurant, Customer, Cart, StatusCart, Role, Category, Dish, RestaurantCategory
+from sqlalchemy import or_
 bp = Blueprint("index", __name__)
 # --- Helpers ---
 ENUM_UPPERCASE = True
@@ -27,6 +28,39 @@ def is_owner(role: str) -> bool:
     rolestr = _role_to_str(role)
     return (rolestr or "").lower() == "restaurant_owner"
 
+CATEGORY_GROUPS = [
+    ("com", "Cơm", ["com", "rice", "don", "gyudon", "curry"]),
+    ("bun-pho", "Bún phở", ["bun", "pho", "phở", "hủ tiếu", "hu tieu", "noodle soup"]),
+    ("an-nhanh", "Ăn nhanh", ["combo", "set", "burger", "ga ran", "gà rán", "fast", "snack", "alacarte"]),
+    ("mi", "Mì", ["mi", "mì", "ramen", "udon", "soba", "noodle"]),
+    ("sashimi", "Sashimi", ["sashimi", "sushi", "ca ngu", "cá ngừ"]),
+    ("salad", "Salad", ["salad", "rau", "vegetable", "healthy"]),
+    ("banh-mi", "Bánh mì", ["banh mi", "bánh mì", "bread", "sandwich", "banh", "bánh"]),
+    ("nuoc", "Nước", ["nuoc", "nước", "drink", "tra", "trà", "soda", "juice", "sukicha"]),
+]
+
+
+def _normalize_text(value: str) -> str:
+    replacements = {
+        "á": "a", "à": "a", "ả": "a", "ã": "a", "ạ": "a", "ă": "a", "ắ": "a", "ằ": "a", "ẳ": "a", "ẵ": "a", "ặ": "a",
+        "â": "a", "ấ": "a", "ầ": "a", "ẩ": "a", "ẫ": "a", "ậ": "a", "đ": "d", "é": "e", "è": "e", "ẻ": "e", "ẽ": "e",
+        "ẹ": "e", "ê": "e", "ế": "e", "ề": "e", "ể": "e", "ễ": "e", "ệ": "e", "í": "i", "ì": "i", "ỉ": "i", "ĩ": "i",
+        "ị": "i", "ó": "o", "ò": "o", "ỏ": "o", "õ": "o", "ọ": "o", "ô": "o", "ố": "o", "ồ": "o", "ổ": "o", "ỗ": "o",
+        "ộ": "o", "ơ": "o", "ớ": "o", "ờ": "o", "ở": "o", "ỡ": "o", "ợ": "o", "ú": "u", "ù": "u", "ủ": "u", "ũ": "u",
+        "ụ": "u", "ư": "u", "ứ": "u", "ừ": "u", "ử": "u", "ữ": "u", "ự": "u", "ý": "y", "ỳ": "y", "ỷ": "y", "ỹ": "y",
+        "ỵ": "y",
+    }
+    text = (value or "").lower()
+    return "".join(replacements.get(ch, ch) for ch in text)
+
+
+def _category_group_key(category_name: str, dish_names=None):
+    haystack = _normalize_text(" ".join([category_name or "", *(dish_names or [])]))
+    for key, _label, keywords in CATEGORY_GROUPS:
+        if any(_normalize_text(keyword) in haystack for keyword in keywords):
+            return key
+    return None
+
 # --- Routes ---
 @bp.route("/")
 def index():
@@ -36,28 +70,102 @@ def index():
         return redirect(url_for("admin.admin_home"))
     keyword = (request.args.get("search") or "").strip()
     rating_filter = request.args.get("rating")
-    location_filter = request.args.get("location")
+    restaurant_category_filter = (request.args.get("restaurant_category") or "").strip()
+    category_group_filter = (request.args.get("category_group") or "").strip()
     page = request.args.get("page", 1, type=int)
-    per_page = 20
+    per_page = 12
 
-    if not keyword:
-        restaurants = Restaurant.query.limit(50).all()
-    else:
-        by_name = get_restaurants_by_name(keyword)
-        by_dish = get_restaurants_by_dishes_name(keyword)
-        restaurants = list({r.restaurant_id: r for r in (by_name + by_dish)}.values())
+    restaurant_query = Restaurant.query
+
+    if keyword:
+        like_keyword = f"%{keyword}%"
+        dish_restaurant_ids = [
+            row[0] for row in Dish.query
+            .filter(Dish.name.ilike(like_keyword))
+            .with_entities(Dish.res_id)
+            .distinct()
+            .all()
+        ]
+        restaurant_query = restaurant_query.filter(
+            or_(
+                Restaurant.name.ilike(like_keyword),
+                Restaurant.address.ilike(like_keyword),
+                Restaurant.restaurant_id.in_(dish_restaurant_ids or [-1]),
+            )
+        )
+
+    if restaurant_category_filter:
+        restaurant_query = restaurant_query.join(RestaurantCategory).filter(
+            RestaurantCategory.name == restaurant_category_filter
+        )
 
     if rating_filter and rating_filter.isdigit():
-        min_rating = int(rating_filter)
-        restaurants = [r for r in restaurants if (r.rating_point or 0) >= min_rating]
+        restaurant_query = restaurant_query.filter(Restaurant.rating_point >= int(rating_filter))
 
-    if location_filter:
-        restaurants = [r for r in restaurants if r.address and location_filter in r.address]
+    grouped_category_ids = []
+    category_options = (
+        Category.query
+        .join(Restaurant, Category.res_id == Restaurant.restaurant_id)
+        .order_by(Restaurant.name.asc(), Category.name.asc())
+        .all()
+    )
+    grouped_categories = {key: {"key": key, "label": label, "count": 0} for key, label, _ in CATEGORY_GROUPS}
+    for cat in category_options:
+        sample_dish_names = [
+            row[0] for row in Dish.query
+            .filter_by(category_id=cat.category_id)
+            .with_entities(Dish.name)
+            .limit(8)
+            .all()
+        ]
+        group_key = _category_group_key(cat.name, sample_dish_names)
+        if group_key:
+            grouped_categories[group_key]["count"] += 1
+            if category_group_filter == group_key:
+                grouped_category_ids.append(cat.category_id)
 
-    locations = [row[0] for row in Restaurant.query.with_entities(Restaurant.address)
-                 .filter(Restaurant.address.isnot(None)).distinct().all()]
+    if category_group_filter and not grouped_category_ids:
+        grouped_category_ids = [-1]
 
-    restaurants.sort(key=lambda r: r.rating_point or 0, reverse=True)
+    if category_group_filter:
+        dish_query = Dish.query
+        dish_query = dish_query.filter(Dish.category_id.in_(grouped_category_ids))
+        matched_restaurant_ids = [
+            row[0] for row in dish_query.with_entities(Dish.res_id).distinct().all()
+        ]
+        restaurant_query = restaurant_query.filter(
+            Restaurant.restaurant_id.in_(matched_restaurant_ids or [-1])
+        )
+
+    restaurants = restaurant_query.order_by(Restaurant.rating_point.desc()).all()
+    restaurant_options = Restaurant.query.order_by(Restaurant.name.asc()).all()
+    category_groups = [grouped_categories[key] for key, _label, _keywords in CATEGORY_GROUPS]
+
+    restaurant_groups = {}
+    for res in restaurant_options:
+        if res.restaurant_category:
+            restaurant_groups.setdefault(res.restaurant_category.name, []).append(res)
+
+    preferred_group_order = ["Viet", "Nhat"]
+    ordered_restaurant_groups = {
+        key: restaurant_groups.pop(key)
+        for key in preferred_group_order
+        if key in restaurant_groups
+    }
+    for key in sorted(restaurant_groups):
+        ordered_restaurant_groups[key] = restaurant_groups[key]
+
+    dish_sections = []
+    for res in restaurants[:8]:
+        categories = Category.query.filter_by(res_id=res.restaurant_id).order_by(Category.name.asc()).all()
+        category_items = []
+        for cat in categories[:4]:
+            foods_query = Dish.query.filter_by(category_id=cat.category_id)
+            foods = foods_query.order_by(Dish.name.asc()).limit(4).all()
+            if foods:
+                category_items.append({"category": cat, "dishes": foods})
+        if category_items:
+            dish_sections.append({"restaurant": res, "categories": category_items})
     total = len(restaurants)
     start = (page - 1) * per_page
     end = start + per_page
@@ -70,7 +178,10 @@ def index():
     return render_template(
         "customer_home.html",
         restaurants=restaurants_with_stars,
-        locations=locations,
+        restaurant_groups=ordered_restaurant_groups,
+        restaurant_options=restaurant_options,
+        category_groups=category_groups,
+        dish_sections=dish_sections,
         page=page,
         per_page=per_page,
         total=total,
