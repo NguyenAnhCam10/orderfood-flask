@@ -41,9 +41,10 @@ jobs:
       - name: Run app (background) & early diagnostics
         env:
           PYTHONUNBUFFERED: "1"
+          FLASK_APP: OrderFood:app
         run: |
           # chạy dưới dạng module để Python nhận package OrderFood
-          nohup python -m OrderFood.index > app.log 2>&1 &
+          nohup flask run --host 0.0.0.0 --port 5000 > app.log 2>&1 &
           echo $! > app.pid
           sleep 3
           echo "=== first logs ==="
