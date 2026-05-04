@@ -331,4 +331,6 @@ def cart_route(restaurant_id):
 # deploy thì bỏ nguyên cái if này đi
 
 if __name__ == "__main__":
-    bp.run(host="0.0.0.0", port=5000, debug=True)
+    from OrderFood import app
+
+    app.run(host="0.0.0.0", port=5000, debug=False, use_reloader=False)
