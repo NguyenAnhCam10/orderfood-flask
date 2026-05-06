@@ -33,13 +33,19 @@ def _vnp_sign(params: dict) -> str:
                     query.encode("utf-8"),
                     hashlib.sha512).hexdigest()
 
-@vnpay_bp.route("/checkout/vnpay")
-@vnpay_bp.route("/checkout/vnpay/<int:restaurant_id>")
+@vnpay_bp.route("/checkout/vnpay", methods=["GET", "POST"])
+@vnpay_bp.route("/checkout/vnpay/<int:restaurant_id>", methods=["GET", "POST"])
 def checkout_vnpay(restaurant_id=None):
     user_id = session.get("user_id")
     if not user_id:
         flash("Bạn cần đăng nhập trước khi thanh toán.", "warning")
         return redirect(url_for("login", next=request.url))
+
+    delivery_address = (
+        request.form.get("delivery_address") or
+        request.args.get("delivery_address") or
+        ""
+    ).strip()
 
     # ===== Xác định restaurant_id (rid) =====
     rid = restaurant_id or request.args.get("restaurant_id", type=int)
@@ -75,21 +81,22 @@ def checkout_vnpay(restaurant_id=None):
                     .first())
 
         if order:
-            # đồng bộ lại tổng tiền & thời gian chờ
             order.total_price = total_price
             order.waiting_time = waiting_time
+            if delivery_address:
+                order.delivery_address = delivery_address
         else:
-            # Chưa có -> tạo mới
             order = Order(
                 customer_id=user_id,
                 restaurant_id=rid,
                 cart_id=cart.cart_id,
                 status=StatusOrder.PENDING,
                 total_price=total_price,
-                waiting_time=waiting_time
+                waiting_time=waiting_time,
+                delivery_address=delivery_address or None,
             )
             db.session.add(order)
-            db.session.flush()   # lấy order_id
+            db.session.flush()
 
 
         # ===== Đảm bảo có Payment & làm mới txn_ref =====

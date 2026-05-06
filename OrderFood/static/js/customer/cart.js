@@ -133,7 +133,8 @@ function updateCartItem(itemId, quantity, note, row) {
     .then(data => {
         if (data.success) {
             row.querySelector('.cart-subtotal').textContent = formatVnd(data.subtotal);
-            document.getElementById('cart-total').textContent = formatVnd(data.total);
+            const totalEl = document.getElementById('cart-subtotal') || document.getElementById('cart-total');
+            if (totalEl) totalEl.textContent = formatVnd(data.total);
         } else alert(data.error || "Có lỗi khi cập nhật sản phẩm");
     }).catch(err => console.error(err));
 }
@@ -150,10 +151,11 @@ function deleteCartItem(itemId, row) {
 
             // Update tổng giá
             let total = 0;
-            document.querySelectorAll('.cart-subtotal').forEach(cell => {
+            document.querySelectorAll('tbody .cart-subtotal').forEach(cell => {
                 total += parseVnd(cell.textContent);
             });
-            document.getElementById('cart-total').textContent = formatVnd(total);
+            const totalEl = document.getElementById('cart-subtotal') || document.getElementById('cart-total');
+            if (totalEl) totalEl.textContent = formatVnd(total);
             console.log(data.redirect_url);
 
             // Redirect nếu giỏ hàng trống

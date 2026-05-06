@@ -56,12 +56,22 @@
 
   {% if cart and cart.items|length > 0 %}
     {% set rid = cart.res_id if cart and cart.res_id else (cart.restaurant.restaurant_id if cart and cart.restaurant else None) %}
-    <div class="ct-actions">
-      <a class="ct-btn-pay" href="{{ url_for('vnpay.checkout_vnpay', restaurant_id=rid) }}">
-        <img src="{{ url_for('static', filename='img/vnpay.jpg') }}" alt="VNPay" class="ct-pay-logo" loading="lazy">
-        Thanh toán VNPay
-      </a>
-    </div>
+    <form method="POST" action="{{ url_for('vnpay.checkout_vnpay', restaurant_id=rid) }}" id="checkout-form">
+      <div class="mt-3">
+        <label class="form-label fw-semibold">Địa chỉ giao hàng <span class="text-danger">*</span></label>
+        <input type="text" name="delivery_address" id="delivery-address" class="form-control"
+               value="{{ user_address }}"
+               placeholder="Ví dụ: 123 Nguyễn Văn A, Quận 1, TP.HCM"
+               required maxlength="255">
+        <div class="invalid-feedback">Vui lòng nhập địa chỉ giao hàng.</div>
+      </div>
+      <div class="ct-actions mt-3">
+        <button type="submit" class="ct-btn-pay" onclick="return validateCheckout()">
+          <img src="{{ url_for('static', filename='img/vnpay.jpg') }}" alt="VNPay" class="ct-pay-logo" loading="lazy">
+          Thanh toán VNPay
+        </button>
+      </div>
+    </form>
   {% endif %}
 
   {% else %}
@@ -70,5 +80,15 @@
 </div>
 
 <script src="{{ url_for('static', filename='js/customer/cart.js') }}"></script>
+<script>
+function validateCheckout() {
+  const addr = document.getElementById('delivery-address');
+  if (!addr || !addr.value.trim()) {
+    addr && addr.classList.add('is-invalid');
+    return false;
+  }
+  return true;
+}
+</script>
 
 {% endblock %}
