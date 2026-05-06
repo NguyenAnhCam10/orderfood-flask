@@ -103,8 +103,10 @@ def cart(restaurant_id):
     cart_items = cart.items if cart else []
     total_price = sum(item.quantity * item.dish.price for item in cart_items) if cart_items else 0
     is_open = is_restaurant_open(Restaurant.query.filter_by(restaurant_id=restaurant_id).first())
-    return render_template("/customer/cart.html", cart=cart, cart_items=cart_items, total_price=total_price
-                           , is_open=is_open)
+    user = User.query.get(user_id)
+    user_address = (user.address or "") if user else ""
+    return render_template("/customer/cart.html", cart=cart, cart_items=cart_items, total_price=total_price,
+                           is_open=is_open, user_address=user_address)
 
 # ========== CẬP NHẬT ITEM ==========
 @customer_bp.route("/api/cart/<int:item_id>", methods=["PUT"])
