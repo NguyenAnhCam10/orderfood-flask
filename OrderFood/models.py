@@ -259,6 +259,7 @@ class Order(db.Model):
         default=lambda: datetime.now(ZoneInfo("Asia/Ho_Chi_Minh"))
     )
     canceled_by = db.Column(SAEnum(Role, name="order_canceled_by_enum"), nullable=True)
+    delivery_address = db.Column(db.String(255), nullable=True)
 
 
     customer = db.relationship("Customer", backref=db.backref("orders", cascade="all, delete-orphan"))
