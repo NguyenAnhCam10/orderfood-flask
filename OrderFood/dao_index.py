@@ -27,6 +27,9 @@ def create_user(name, email, phone, hashed_password, role: str):
             owner = RestaurantOwner(user_id=u.user_id, tax=None)
             db.session.add(owner)
             db.session.commit()
+        elif role.upper() == "CUSTOMER":
+            db.session.add(Customer(user_id=u.user_id))
+            db.session.commit()
         return u
     except IntegrityError:
         db.session.rollback()

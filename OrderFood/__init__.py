@@ -135,6 +135,9 @@ def create_app():
 
         db.create_all()
 
+        from OrderFood.migrations import run_migrations
+        run_migrations(db)
+
         # --------- CLEAR DATA (chỉ khi bạn chủ động bật) ----------
         if SEED_CLEAR:
             if not PRESERVE_TRANSACTIONS:
