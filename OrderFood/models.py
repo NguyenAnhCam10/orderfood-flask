@@ -161,7 +161,8 @@ class Restaurant(db.Model):
     rating_point = db.Column(db.Float, default=0.0)
     is_open = db.Column(db.Boolean, default=False, nullable=False)
 
-
+    latitude = db.Column(db.Float, nullable=True)
+    longitude = db.Column(db.Float, nullable=True)
     owner = db.relationship("RestaurantOwner", back_populates="restaurant")
     approved_by = db.relationship("Admin", back_populates="restaurants_approved")
     restaurant_category = db.relationship("RestaurantCategory", back_populates="restaurants")
