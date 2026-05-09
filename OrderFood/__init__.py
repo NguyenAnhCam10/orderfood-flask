@@ -57,6 +57,8 @@ PRESERVE_TRANSACTIONS = os.getenv("PRESERVE_TRANSACTIONS", "true").lower() == "t
 def create_app():
 
     app = Flask(__name__)
+    print("CLOUDINARY =", os.getenv("CLOUDINARY_CLOUD_NAME"))
+    print("VNP HASH =", os.getenv("VNP_HASH_SECRET"))
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret")
     app.config["SQLALCHEMY_DATABASE_URI"] = SQLALCHEMY_DATABASE_URI
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = SQLALCHEMY_TRACK_MODIFICATIONS
@@ -135,8 +137,8 @@ def create_app():
 
         db.create_all()
 
-        from OrderFood.migrations import run_migrations
-        run_migrations(db)
+        # from OrderFood.migrations import run_migrations
+        # run_migrations(db)
 
         # --------- CLEAR DATA (chỉ khi bạn chủ động bật) ----------
         if SEED_CLEAR:

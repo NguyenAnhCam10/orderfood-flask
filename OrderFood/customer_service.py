@@ -412,3 +412,22 @@ def profile_upload_avatar():
         flash("Không thể tải ảnh lên. Vui lòng thử lại.", "danger")
 
     return redirect(url_for("customer.profile_page"))
+
+
+import math
+
+
+def calculate_distance(lat1, lon1, lat2, lon2):
+    # Nếu 1 trong 4 tọa độ bị thiếu thì không tính được
+    if not all([lat1, lon1, lat2, lon2]):
+        return None
+
+    R = 6371.0  # Bán kính Trái Đất (km)
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+
+    a = (math.sin(dlat / 2) ** 2 +
+         math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2) ** 2)
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+    return round(R * c, 1)  # Trả về số km (ví dụ: 2.5)

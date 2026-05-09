@@ -34,6 +34,9 @@
                 <p class="eyebrow">Tìm kiếm</p>
                 <h1>Tìm nhanh nhà hàng và món ăn</h1>
             </div>
+            <button type="button" id="btn-update-location" class="btn btn-outline-secondary btn-sm" style="border-radius: 20px;">
+            <i class="fa-solid fa-location-crosshairs"></i> Vị trí của tôi
+        </button>
             <a class="clear-link" href="{{ url_for('index.index') }}">Xóa lọc</a>
         </div>
 
@@ -152,11 +155,17 @@
                         <h3 title="{{ r.name }}">{{ r.name }}</h3>
                         <span>{{ "%.1f"|format(r.rating_point or 0) }}</span>
                     </div>
-                    <p class="restaurant-address" title="{{ r.address }}">{{ r.address }}</p>
+<!--                    <p class="restaurant-address" title="{{ r.address }}">{{ r.address }}</p>-->
                     <div class="restaurant-meta">
                         <span><i class="fa-regular fa-clock"></i>{{ r.open_hour or '08:00' }} - {{ r.close_hour or '22:00' }}</span>
                         <span><i class="fa-solid fa-circle-check"></i>Đang mở</span>
+
                     </div>
+                     {% if item.distance != None %}
+        <span style="color: #28a745; font-weight: bold;">
+            <i class="fas fa-motorcycle"></i> {{ item.distance }} km
+        </span>
+    {% endif %}
                     {% if s %}
                     <div class="ch-rating">
                         {% for _ in range(s.full) %}<i class="fas fa-star"></i>{% endfor %}
@@ -194,4 +203,86 @@
         {% endif %}
     </section>
 </section>
+<script>
+window.addEventListener('load', function() {
+
+    //  1: TỰ ĐỘNG LẤY HOẶC ĐỌC VỊ TRÍ KHI VỪA VÀO WEB
+    // ----------------------------------------------------
+    const urlParams = new URLSearchParams(window.location.search);
+    let lat = urlParams.get('lat');
+    let lng = urlParams.get('lng');
+
+    if (!lat || !lng) {
+        let sessionLat = sessionStorage.getItem('user_lat');
+        let sessionLng = sessionStorage.getItem('user_lng');
+
+        if (sessionLat && sessionLng) {
+            urlParams.set('lat', sessionLat);
+            urlParams.set('lng', sessionLng);
+            window.location.search = urlParams.toString();
+        } else {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        let newLat = position.coords.latitude;
+                        let newLng = position.coords.longitude;
+                        sessionStorage.setItem('user_lat', newLat);
+                        sessionStorage.setItem('user_lng', newLng);
+                        urlParams.set('lat', newLat);
+                        urlParams.set('lng', newLng);
+                        window.location.search = urlParams.toString();
+                    },
+                    function(error) {
+                        console.log("Khách hàng từ chối cấp vị trí.");
+                    }
+                );
+            }
+        }
+    } else {
+        sessionStorage.setItem('user_lat', lat);
+        sessionStorage.setItem('user_lng', lng);
+    }
+
+
+    // 2: XỬ LÝ SỰ KIỆN KHI KHÁCH BẤM NÚT CẬP NHẬT
+    // ----------------------------------------------------
+    const btnUpdateLocation = document.getElementById('btn-update-location');
+    if (btnUpdateLocation) {
+        btnUpdateLocation.addEventListener('click', function() {
+            let originalText = this.innerHTML;
+            this.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang tìm...';
+            this.disabled = true;
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        let newLat = position.coords.latitude;
+                        let newLng = position.coords.longitude;
+
+                        sessionStorage.setItem('user_lat', newLat);
+                        sessionStorage.setItem('user_lng', newLng);
+
+                        const btnUrlParams = new URLSearchParams(window.location.search);
+                        btnUrlParams.set('lat', newLat);
+                        btnUrlParams.set('lng', newLng);
+                        window.location.search = btnUrlParams.toString();
+                    },
+                    function(error) {
+                        alert("Không thể lấy vị trí! Vui lòng kiểm tra lại quyền truy cập vị trí trên trình duyệt của bạn.");
+                        btnUpdateLocation.innerHTML = originalText;
+                        btnUpdateLocation.disabled = false;
+                    },
+                    { enableHighAccuracy: true, timeout: 5000 }
+                );
+            } else {
+                alert("Trình duyệt không hỗ trợ định vị.");
+                btnUpdateLocation.innerHTML = originalText;
+                btnUpdateLocation.disabled = false;
+            }
+        });
+    } // <--- ĐÂY CHÍNH LÀ CÁI NGOẶC BẠN BỊ THIẾU
+});
+</script>
+
+
 {% endblock %}

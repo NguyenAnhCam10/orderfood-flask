@@ -298,6 +298,7 @@ def update_restaurant():
         db.session.rollback()
         return jsonify({"success": False, "error": str(e)}), 500
 
+
 @owner_bp.route("/res_register", methods=["GET", "POST"])
 def res_register():
     if request.method == "GET":
@@ -320,6 +321,10 @@ def res_register():
         tax = request.form.get("tax")
         image_url = request.form.get("image_url")
 
+        # === THÊM: Lấy tọa độ từ form gửi lên ===
+        lat_str = request.form.get("latitude")
+        lng_str = request.form.get("longitude")
+
         if not all([name, address, open_hour, close_hour, tax]):
             return jsonify({"success": False, "error": "Thiếu thông tin bắt buộc"}), 400
 
@@ -331,6 +336,10 @@ def res_register():
             owner = RestaurantOwner(user_id=user_id, tax=tax)
             db.session.add(owner)
 
+        # Xử lý ép kiểu tọa độ sang float để lưu DB
+        lat_val = float(lat_str) if lat_str else None
+        lng_val = float(lng_str) if lng_str else None
+
         # tạo restaurant
         restaurant = Restaurant(
             name=name,
@@ -339,7 +348,10 @@ def res_register():
             close_hour=close_hour,
             image=image_url,
             res_owner_id=user_id,
-            status=StatusRes.PENDING
+            status=StatusRes.PENDING,
+            # === THÊM: Lưu vào Model ===
+            latitude=lat_val,
+            longitude=lng_val
         )
 
         db.session.add(restaurant)

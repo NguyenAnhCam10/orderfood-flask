@@ -6,12 +6,13 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask import Blueprint
 # from OrderFood import db
 from OrderFood.extensions import db
-from OrderFood.customer_service import PHONE_RE, get_user_by_phone
+from OrderFood.customer_service import PHONE_RE, get_user_by_phone, calculate_distance
 from OrderFood.dao import *
 from OrderFood.dao_index import get_restaurants_by_name, get_restaurants_by_dishes_name, get_star_display, \
     get_user_by_email, create_user, get_active_cart, add_cart_item, count_cart_items
 from OrderFood.models import Restaurant, Customer, Cart, StatusCart, Role, Category, Dish, RestaurantCategory
 from sqlalchemy import or_
+import math
 bp = Blueprint("index", __name__)
 # --- Helpers ---
 ENUM_UPPERCASE = True
@@ -62,12 +63,20 @@ def _category_group_key(category_name: str, dish_names=None):
     return None
 
 # --- Routes ---
+# Đừng quên import hàm calculate_distance ở trên cùng file nhé
+# from OrderFood.utils import calculate_distance (hoặc nơi bạn để hàm này)
+
 @bp.route("/")
 def index():
     role = session.get("role")
     if role and role.lower() == "admin":
         flash("Admin không được truy cập trang này.", "warning")
         return redirect(url_for("admin.admin_home"))
+
+    # --- 1. LẤY TỌA ĐỘ KHÁCH HÀNG TỪ URL ---
+    user_lat = request.args.get("lat", type=float)
+    user_lng = request.args.get("lng", type=float)
+
     keyword = (request.args.get("search") or "").strip()
     rating_filter = request.args.get("rating")
     restaurant_category_filter = (request.args.get("restaurant_category") or "").strip()
@@ -77,6 +86,7 @@ def index():
 
     restaurant_query = Restaurant.query
 
+    # [GIỮ NGUYÊN CODE CŨ] --- Xử lý filter keyword, category, rating ---
     if keyword:
         like_keyword = f"%{keyword}%"
         dish_restaurant_ids = [
@@ -137,7 +147,21 @@ def index():
             Restaurant.restaurant_id.in_(matched_restaurant_ids or [-1])
         )
 
+    # Lấy toàn bộ danh sách nhà hàng thỏa mãn điều kiện lọc
     restaurants = restaurant_query.order_by(Restaurant.rating_point.desc()).all()
+
+    # --- 2. TÍNH KHOẢNG CÁCH VÀ SẮP XẾP ---
+    for r in restaurants:
+        r.distance = None  # Gắn tạm thuộc tính distance vào object
+        if user_lat and user_lng and getattr(r, 'latitude', None) and getattr(r, 'longitude', None):
+            r.distance = calculate_distance(user_lat, user_lng, r.latitude, r.longitude)
+
+    # Nếu có vị trí khách, ưu tiên sắp xếp danh sách từ gần đến xa
+    if user_lat and user_lng:
+        restaurants.sort(key=lambda r: r.distance if r.distance is not None else float('inf'))
+    # ----------------------------------------
+
+    # [GIỮ NGUYÊN CODE CŨ] --- Xử lý groups, options, dish sections ---
     restaurant_options = Restaurant.query.order_by(Restaurant.name.asc()).all()
     category_groups = [grouped_categories[key] for key, _label, _keywords in CATEGORY_GROUPS]
 
@@ -166,12 +190,20 @@ def index():
                 category_items.append({"category": cat, "dishes": foods})
         if category_items:
             dish_sections.append({"restaurant": res, "categories": category_items})
+
+    # [GIỮ NGUYÊN CODE CŨ] --- Xử lý phân trang ---
     total = len(restaurants)
     start = (page - 1) * per_page
     end = start + per_page
     restaurants_page = restaurants[start:end]
+
+    # --- 3. ĐƯA KHOẢNG CÁCH VÀO BIẾN HIỂN THỊ ---
     restaurants_with_stars = [
-        {"restaurant": r, "stars": get_star_display(r.rating_point or 0)}
+        {
+            "restaurant": r,
+            "stars": get_star_display(r.rating_point or 0),
+            "distance": getattr(r, 'distance', None)  # Lấy khoảng cách đã tính ở trên
+        }
         for r in restaurants_page
     ]
 
@@ -186,7 +218,6 @@ def index():
         per_page=per_page,
         total=total,
     )
-
 @bp.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
@@ -255,7 +286,7 @@ def login():
         user = get_user_by_email(email)
         if not user or not check_password_hash(user.password, password):
             flash("Tài khoản hoặc mật khẩu không chính xác.", "danger")
-            return redirect(url_for("login"))
+            return redirect(url_for("index.login"))
 
         session["user_id"] = user.user_id
         session["user_email"] = user.email

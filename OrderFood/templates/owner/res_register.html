@@ -1,42 +1,149 @@
 {% extends "layout/base.html" %}
 {% block title %}Đăng ký nhà hàng{% endblock %}
 {% block content %}
-<div class="container mt-4">
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<div class="container mt-4 mb-5">
     <h2 class="mb-4">Đăng ký nhà hàng</h2>
     <form id="resRegisterForm" enctype="multipart/form-data">
-        <!-- Tên nhà hàng -->
+
         <div class="mb-3">
             <label for="name" class="form-label">Tên nhà hàng</label>
             <input type="text" class="form-control" id="name" name="name" required>
         </div>
-        <!-- Địa chỉ -->
+
         <div class="mb-3">
             <label for="address" class="form-label">Địa chỉ</label>
-            <input type="text" class="form-control" id="address" name="address" required>
+            <div class="input-group">
+                <input type="text" class="form-control" id="address" name="address" required placeholder="Số nhà, tên đường, quận/huyện...">
+                <button class="btn btn-outline-secondary" type="button" id="btn-search-addr">
+                    <i class="fas fa-search-location"></i> Tìm trên bản đồ
+                </button>
+            </div>
         </div>
-        <!-- Giờ mở cửa -->
+
+        <div class="card mb-4 border-info">
+            <div class="card-header bg-info text-white">
+                <i class="fas fa-map-marker-alt"></i> Chọn vị trí nhà hàng trên bản đồ
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-2">Nhấp vào bản đồ hoặc kéo thả ghim màu xanh để xác định chính xác vị trí nhà hàng của bạn.</p>
+
+                <div id="map" style="height: 350px; width: 100%; border-radius: 8px; border: 1px solid #ccc; margin-bottom: 15px; z-index: 1;"></div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-2">
+                        <label class="form-label text-muted small">Vĩ độ (Latitude)</label>
+                        <input type="text" class="form-control bg-light" id="latitude" name="latitude" readonly required>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <label class="form-label text-muted small">Kinh độ (Longitude)</label>
+                        <input type="text" class="form-control bg-light" id="longitude" name="longitude" readonly required>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="mb-3">
             <label for="open_hour" class="form-label">Giờ mở cửa</label>
             <input type="time" class="form-control" id="open_hour" name="open_hour" required>
         </div>
-        <!-- Giờ đóng cửa -->
         <div class="mb-3">
             <label for="close_hour" class="form-label">Giờ đóng cửa</label>
             <input type="time" class="form-control" id="close_hour" name="close_hour" required>
         </div>
-        <!-- Mã số thuế -->
         <div class="mb-3">
             <label for="tax" class="form-label">Mã số thuế</label>
             <input type="text" class="form-control" id="tax" name="tax" required>
         </div>
-        <!-- Ảnh -->
         <div class="mb-3">
             <label for="image" class="form-label">Ảnh nhà hàng</label>
             <input type="file" class="form-control" id="image" name="image" accept="image/*">
         </div>
-        <button type="submit" class="btn btn-primary">Đăng ký</button>
+
+        <button type="submit" class="btn btn-primary btn-lg w-100 mt-2 mb-4">Đăng ký nhà hàng</button>
     </form>
 </div>
+
+<script>
+window.addEventListener('load', function() {
+    // Nếu L chưa được định nghĩa (lỗi mạng ko tải được CSS/JS), thoát ngay để ko báo lỗi
+    if (typeof L === 'undefined') {
+        console.error("Lỗi: Không tải được thư viện Leaflet.");
+        return;
+    }
+
+    const defaultLat = 10.7769;
+    const defaultLng = 106.7009;
+
+    const map = L.map('map').setView([defaultLat, defaultLng], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+
+    const marker = L.marker([defaultLat, defaultLng], { draggable: true }).addTo(map);
+    const latInput = document.getElementById('latitude');
+    const lngInput = document.getElementById('longitude');
+    const addrInput = document.getElementById('address');
+
+    // Mặc định điền tọa độ Tâm TP.HCM
+    latInput.value = defaultLat.toFixed(6);
+    lngInput.value = defaultLng.toFixed(6);
+
+    // Hàm cập nhật địa chỉ từ tọa độ
+    function updateAddressFromLatLng(lat, lng) {
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.display_name) {
+                    addrInput.value = data.display_name;
+                }
+            })
+            .catch(err => console.error("Lỗi lấy địa chỉ:", err));
+    }
+
+    marker.on('dragend', function(e) {
+        const pos = marker.getLatLng();
+        latInput.value = pos.lat.toFixed(6);
+        lngInput.value = pos.lng.toFixed(6);
+        updateAddressFromLatLng(pos.lat, pos.lng);
+    });
+
+    map.on('click', function(e) {
+        marker.setLatLng(e.latlng);
+        latInput.value = e.latlng.lat.toFixed(6);
+        lngInput.value = e.latlng.lng.toFixed(6);
+        updateAddressFromLatLng(e.latlng.lat, e.latlng.lng);
+    });
+
+    // Tìm kiếm bằng nút bấm
+    document.getElementById('btn-search-addr').addEventListener('click', function() {
+        const query = addrInput.value;
+        if (!query) return alert("Vui lòng nhập địa chỉ trước.");
+
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.length > 0) {
+                    const res = data[0];
+                    const newLat = parseFloat(res.lat);
+                    const newLng = parseFloat(res.lon);
+
+                    map.setView([newLat, newLng], 16);
+                    marker.setLatLng([newLat, newLng]);
+                    latInput.value = newLat.toFixed(6);
+                    lngInput.value = newLng.toFixed(6);
+                } else {
+                    alert("Không tìm thấy địa chỉ này trên bản đồ.");
+                }
+            })
+            .catch(err => console.error("Lỗi tìm địa chỉ:", err));
+    });
+});
+</script>
+
 <script src="{{ url_for('static', filename='js/owner/res_resgister.js') }}"></script>
 
 {% endblock %}
