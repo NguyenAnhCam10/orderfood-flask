@@ -37,6 +37,7 @@ class StatusOrder(Enum):
     PENDING = "PENDING"
     PAID = "PAID"
     ACCEPTED = "ACCEPTED"
+    DELIVERING = "DELIVERING"
     CANCELED = "CANCELED"
     COMPLETED = "COMPLETED"
 
@@ -160,6 +161,7 @@ class Restaurant(db.Model):
     address = db.Column(db.String(255))
     rating_point = db.Column(db.Float, default=0.0)
     is_open = db.Column(db.Boolean, default=False, nullable=False)
+    prep_time = db.Column(db.Integer, nullable=False, default=10)
 
     latitude = db.Column(db.Float, nullable=True)
     longitude = db.Column(db.Float, nullable=True)
@@ -259,6 +261,7 @@ class Order(db.Model):
         db.DateTime,
         default=lambda: datetime.now(ZoneInfo("Asia/Ho_Chi_Minh"))
     )
+    accepted_at = db.Column(db.DateTime, nullable=True)
     canceled_by = db.Column(SAEnum(Role, name="order_canceled_by_enum"), nullable=True)
     delivery_address = db.Column(db.String(255), nullable=True)
 

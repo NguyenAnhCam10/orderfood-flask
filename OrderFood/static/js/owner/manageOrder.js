@@ -1,116 +1,186 @@
 (function () {
 
   function formatVnd(value) {
-    const amount = Math.round(Number(value) || 0);
-    return amount.toLocaleString("vi-VN") + "đ";
+    return Math.round(Number(value) || 0).toLocaleString("vi-VN") + "đ";
   }
 
   function findRow(el) {
     return el.closest("li.list-group-item") || el.closest("tr");
   }
 
-  function setLoading(btn, isLoading) {
+  function setLoading(btn, loading) {
     if (!btn) return;
-    btn.disabled = isLoading;
-    btn.dataset.originalTitle = btn.dataset.originalTitle || btn.title || "";
-    btn.title = isLoading ? "Đang xử lý..." : btn.dataset.originalTitle;
-    btn.style.opacity = isLoading ? "0.6" : "1";
+    btn.disabled = loading;
+    btn.style.opacity = loading ? "0.6" : "1";
   }
 
-  // Duyệt đơn
+  // ===== Countdown badges (cho ACCEPTED tab) =====
+  function startCountdowns() {
+    document.querySelectorAll(".countdown-badge[data-expiry]").forEach(el => {
+      const expiry = parseInt(el.dataset.expiry) * 1000;
+      function tick() {
+        const diff = expiry - Date.now();
+        if (diff <= 0) { el.textContent = "sắp xong"; return; }
+        const m = Math.floor(diff / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        el.textContent = `${m}:${String(s).padStart(2, "0")}`;
+        setTimeout(tick, 1000);
+      }
+      tick();
+    });
+  }
+  startCountdowns();
+
+  // ===== Xác nhận đơn (PAID → ACCEPTED) =====
   document.addEventListener("click", async (e) => {
     const btn = e.target.closest(".approve-order-btn");
     if (!btn) return;
-
     const orderId = btn.dataset.orderId;
-    if (!orderId) return;
-
     const row = findRow(btn);
     try {
       setLoading(btn, true);
       const res = await fetch(`/owner/orders/${orderId}/approve`, {
-        method: "POST",
-        headers: { "Accept": "application/json" }
+        method: "POST", headers: { "Accept": "application/json" }
       });
       const data = await res.json();
-      if (!res.ok || data.status !== "ACCEPTED") throw new Error(data.error || "Không thể duyệt đơn");
+      if (!res.ok || data.status !== "ACCEPTED") throw new Error(data.error || "Lỗi");
 
-      row.style.transition = "opacity 0.3s";
       row.style.opacity = 0;
       setTimeout(() => row.remove(), 350);
 
-      const approvedTab = document.querySelector("#approved ul.list-group");
-      if (approvedTab) {
+      const approvedList = document.querySelector("#approved-list");
+      if (approvedList) {
+        const expiry = data.accepted_at_ts + data.waiting_time * 60;
         const li = document.createElement("li");
         li.className = "list-group-item";
-        let itemsHTML = "";
-        if (data.items) itemsHTML = data.items.map(i => `- ${i.name} x ${i.quantity}`).join("<br>");
+        li.id = `order-row-${data.order_id}`;
         li.innerHTML = `
-          <div>Đơn #${data.order_id} - ${data.customer_name} - ${formatVnd(data.total_price)}</div>
-          <div style="margin-top: 5px;">
-            <strong>Sản phẩm:</strong><br>${itemsHTML}
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <strong>Đơn #${data.order_id}</strong> — ${data.customer_name} — ${formatVnd(data.total_price)}
+              <span class="badge bg-primary ms-2">Còn <span class="countdown-badge" data-expiry="${expiry}">…</span></span>
+            </div>
+            <button class="btn btn-warning btn-sm deliver-order-btn" data-order-id="${data.order_id}">
+              Bắt đầu giao hàng
+            </button>
           </div>
-          <span class="order-status-badge"><span class="badge bg-info">Đã duyệt</span></span>
-        `;
-        approvedTab.appendChild(li);
+          <div class="mt-1 small text-muted">
+            ${(data.items || []).map(i => `— ${i.name} x ${i.quantity}`).join(" ")}
+          </div>`;
+        approvedList.appendChild(li);
+        startCountdowns();
       }
 
-      if (window.Toast) Toast.success("Đã duyệt đơn!");
+      // Chuyển sang tab Đang chuẩn bị
+      document.getElementById("approved-tab")?.click();
     } catch (err) {
-      console.error(err);
-      if (window.Toast) Toast.error(err.message);
+      alert(err.message);
     } finally {
       setLoading(btn, false);
     }
   });
 
-  // Hủy đơn
-  // Hủy đơn
-document.addEventListener("submit", async (e) => {
-  const form = e.target.closest("form");
-  if (!form || !form.classList.contains("cancel-order-form")) return;
-  e.preventDefault();
+  // ===== Bắt đầu giao (ACCEPTED → DELIVERING) =====
+  document.addEventListener("click", async (e) => {
+    const btn = e.target.closest(".deliver-order-btn");
+    if (!btn) return;
+    const orderId = btn.dataset.orderId;
+    const row = findRow(btn);
+    try {
+      setLoading(btn, true);
+      const res = await fetch(`/owner/orders/${orderId}/deliver`, {
+        method: "POST", headers: { "Accept": "application/json" }
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Lỗi");
 
-  const orderId = form.dataset.orderId;
-  const reason = form.querySelector("textarea[name='reason']").value.trim();
-  const btn = form.querySelector("button[type=submit]");
-  const row = form.closest("li.list-group-item");
+      row.style.opacity = 0;
+      setTimeout(() => row.remove(), 350);
 
-  try {
-    setLoading(btn, true);
-
-    const res = await fetch(`/owner/orders/${orderId}/cancel`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Accept": "application/json" },
-      body: JSON.stringify({ reason })
-    });
-
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Không thể hủy đơn");
-
-    // Ẩn row tab Pending
-    row.style.transition = "opacity 0.3s";
-    row.style.opacity = 0;
-    setTimeout(() => row.remove(), 350);
-
-    // Append vào tab Cancelled
-    const cancelledTab = document.querySelector("#cancelled ul.list-group");
-    if (cancelledTab) {
-      const li = document.createElement("li");
-      li.className = "list-group-item";
-      li.innerHTML = `
-        Đơn #${data.order_id} - ${data.customer_name} - <span class="text-danger">Đã hủy</span>
-        <br><small><strong>Lý do:</strong> ${data.reason}</small>
-      `;
-      cancelledTab.appendChild(li);
+      const deliveringList = document.querySelector("#delivering-list");
+      if (deliveringList) {
+        const li = document.createElement("li");
+        li.className = "list-group-item";
+        li.id = `order-row-${data.order_id}`;
+        li.innerHTML = `
+          <div class="d-flex justify-content-between align-items-center">
+            <div><strong>Đơn #${data.order_id}</strong></div>
+            <button class="btn btn-success btn-sm complete-order-btn" data-order-id="${data.order_id}">
+              Đã giao thành công
+            </button>
+          </div>`;
+        deliveringList.appendChild(li);
+      }
+      document.getElementById("delivering-tab")?.click();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setLoading(btn, false);
     }
+  });
 
-    if (window.Toast) Toast.success("Đã hủy đơn!");
-  } catch (err) {
-    console.error(err);
-    if (window.Toast) Toast.error(err.message);
-  } finally {
-    setLoading(btn, false);
-  }
-});
+  // ===== Hoàn thành (DELIVERING → COMPLETED) =====
+  document.addEventListener("click", async (e) => {
+    const btn = e.target.closest(".complete-order-btn");
+    if (!btn) return;
+    const orderId = btn.dataset.orderId;
+    const row = findRow(btn);
+    try {
+      setLoading(btn, true);
+      const res = await fetch(`/owner/orders/${orderId}/complete`, {
+        method: "POST", headers: { "Accept": "application/json" }
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Lỗi");
+
+      row.style.opacity = 0;
+      setTimeout(() => row.remove(), 350);
+      document.getElementById("completed-tab")?.click();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setLoading(btn, false);
+    }
+  });
+
+  // ===== Hủy đơn (PAID/ACCEPTED/DELIVERING → CANCELED) =====
+  document.addEventListener("submit", async (e) => {
+    const form = e.target.closest("form.cancel-order-form");
+    if (!form) return;
+    e.preventDefault();
+    const orderId = form.dataset.orderId;
+    const reason = form.querySelector("textarea[name='reason']").value.trim();
+    const btn = form.querySelector("button[type=submit]");
+    const row = form.closest("li.list-group-item");
+    try {
+      setLoading(btn, true);
+      const res = await fetch(`/owner/orders/${orderId}/cancel`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify({ reason })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Lỗi");
+
+      row.style.opacity = 0;
+      setTimeout(() => row.remove(), 350);
+
+      const cancelledList = document.querySelector("#cancelled ul.list-group");
+      if (cancelledList) {
+        const li = document.createElement("li");
+        li.className = "list-group-item";
+        li.innerHTML = `Đơn #${data.order_id} — ${data.customer_name} —
+          <span class="text-danger">Đã hủy</span>
+          ${data.refunded ? '<span class="text-info ms-1 small">· Đã hoàn tiền</span>' : ''}
+          <br><small><strong>Lý do:</strong> ${data.reason || '—'}</small>`;
+        cancelledList.appendChild(li);
+      }
+      document.getElementById("cancelled-tab")?.click();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setLoading(btn, false);
+    }
+  });
+
 })();

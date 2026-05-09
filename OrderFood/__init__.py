@@ -54,6 +54,28 @@ SEED_CLEAR = os.getenv("SEED_CLEAR", "false").lower() == "true"
 PRESERVE_TRANSACTIONS = os.getenv("PRESERVE_TRANSACTIONS", "true").lower() == "true"  # giữ Order/Payment/Cart
 
 
+def _run_migrations(db):
+    """Chạy ALTER TABLE idempotent — tự động khi app khởi động."""
+    migrations = [
+        # Thêm cột prep_time vào restaurant nếu chưa có
+        """ALTER TABLE restaurant ADD COLUMN prep_time INT NOT NULL DEFAULT 10""",
+        # Thêm cột accepted_at vào order nếu chưa có
+        """ALTER TABLE `order` ADD COLUMN accepted_at DATETIME NULL DEFAULT NULL""",
+        # Thêm giá trị DELIVERING vào enum status của order
+        """ALTER TABLE `order` MODIFY COLUMN status ENUM('PENDING','PAID','ACCEPTED','DELIVERING','CANCELED','COMPLETED') NOT NULL DEFAULT 'PENDING'""",
+    ]
+    conn = db.engine.connect()
+    try:
+        for sql in migrations:
+            try:
+                conn.execute(db.text(sql))
+                conn.commit()
+            except Exception:
+                conn.rollback()  # column/enum already exists → skip
+    finally:
+        conn.close()
+
+
 def create_app():
 
     app = Flask(__name__)
@@ -136,9 +158,7 @@ def create_app():
         from OrderFood import models
 
         db.create_all()
-
-        # from OrderFood.migrations import run_migrations
-        # run_migrations(db)
+        _run_migrations(db)
 
         # --------- CLEAR DATA (chỉ khi bạn chủ động bật) ----------
         if SEED_CLEAR:

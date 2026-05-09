@@ -45,6 +45,13 @@
             </label>
         </div>
 
+        <div class="mb-3">
+            <label class="form-label">Thời gian chuẩn bị món (phút, tối đa 10)</label>
+            <input type="number" class="form-control" id="prep-time"
+                   min="1" max="10" value="{{ restaurant.prep_time if restaurant.prep_time else 10 }}">
+            <div class="form-text">Thời gian nhà hàng cần để chuẩn bị sau khi xác nhận đơn.</div>
+        </div>
+
         <button class="btn btn-primary" id="save-btn">Lưu thay đổi</button>
     </div>
 </div>

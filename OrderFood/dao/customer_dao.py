@@ -130,19 +130,14 @@ def update_restaurant_rating(restaurant_id: int) -> None:
 
 # --------- Order track helpers ----------
 def compute_track_state(status_str_upper: str):
-    is_paid = (status_str_upper == "PAID")
-    is_accepted = (status_str_upper in ("ACCEPTED", "ACCEPT"))
     is_canceled = (status_str_upper == "CANCELED")
     is_completed = (status_str_upper == "COMPLETED")
 
-    if is_paid:
-        active_idx = 0
-    elif is_accepted:
-        active_idx = 1
-    elif is_canceled or is_completed:
-        active_idx = 2
-    else:
-        active_idx = -1
+    active_idx = {
+        "PAID":       0,
+        "ACCEPTED":   1,
+        "DELIVERING": 2,
+        "COMPLETED":  3,
+    }.get(status_str_upper, -1)
 
-    last_label = "Đã hủy" if is_canceled else "Đã giao hàng thành công"
-    return active_idx, last_label, is_completed
+    return active_idx, is_canceled, is_completed

@@ -1,7 +1,7 @@
 # OrderFood/owner.py
 from flask import Blueprint, render_template, session, redirect, url_for, request, jsonify
 from OrderFood.models import User, Restaurant, Dish, Category, StatusOrder, StatusCart, Refund, Payment, StatusRefund, \
-    Role, Order, StatusRes
+    Role, Order, StatusRes, StatusPayment
 from OrderFood.dao_index import *
 from OrderFood import db
 from datetime import datetime
@@ -188,41 +188,72 @@ def manage_orders():
 
     res_id = user.restaurant_owner.restaurant.restaurant_id
 
-    pending_orders = Order.query.filter_by(restaurant_id=res_id, status=StatusOrder.PAID).all()
-    approved_orders = Order.query.filter_by(restaurant_id=res_id, status=StatusOrder.ACCEPTED).all()
-    cancelled_orders = Order.query.filter_by(restaurant_id=res_id, status=StatusOrder.CANCELED).all()
-    completed_orders = Order.query.filter_by(restaurant_id=res_id, status=StatusOrder.COMPLETED).all()
+    pending_orders = Order.query.filter_by(restaurant_id=res_id, status=StatusOrder.PAID).order_by(Order.created_date.desc()).all()
+    approved_orders = Order.query.filter_by(restaurant_id=res_id, status=StatusOrder.ACCEPTED).order_by(Order.accepted_at.desc()).all()
+    delivering_orders = Order.query.filter_by(restaurant_id=res_id, status=StatusOrder.DELIVERING).order_by(Order.created_date.desc()).all()
+    cancelled_orders = Order.query.filter_by(restaurant_id=res_id, status=StatusOrder.CANCELED).order_by(Order.created_date.desc()).all()
+    completed_orders = Order.query.filter_by(restaurant_id=res_id, status=StatusOrder.COMPLETED).order_by(Order.created_date.desc()).all()
     restaurant = user.restaurant_owner.restaurant
+    import time as _time
+    now_ts = int(_time.time())
     return render_template("owner/manage_orders.html",
                            pending_orders=pending_orders,
                            approved_orders=approved_orders,
+                           delivering_orders=delivering_orders,
                            cancelled_orders=cancelled_orders,
                            completed_orders=completed_orders,
+                           now_ts=now_ts,
                            res_id=res_id,
                            restaurant=restaurant)
 
 @owner_bp.route("/orders/<int:order_id>/approve", methods=["POST"])
 def approve_order(order_id):
     order = Order.query.get_or_404(order_id)
-    if isinstance(order.status, str):
-        if order.status == StatusOrder.PAID.value:
-            order.status = StatusOrder.ACCEPTED
-        else:
-            return jsonify({"error": "Đơn hàng không ở trạng thái PAID"}), 400
-    else:
-        if order.status == StatusOrder.PAID:
-            order.status = StatusOrder.ACCEPTED
-        else:
-            return jsonify({"error": "Đơn hàng không ở trạng thái PAID"}), 400
+    curr = order.status if not isinstance(order.status, str) else StatusOrder[order.status]
+    if curr != StatusOrder.PAID:
+        return jsonify({"error": "Đơn hàng không ở trạng thái PAID"}), 400
+
+    restaurant = order.restaurant
+    order.status = StatusOrder.ACCEPTED
+    order.accepted_at = datetime.now()
+    order.waiting_time = getattr(restaurant, "prep_time", 10) or 10
 
     db.session.commit()
     return jsonify({
         "order_id": order.order_id,
-        "status": getattr(order.status, "value", order.status),
+        "status": order.status.value,
         "customer_name": order.customer.user.name,
         "total_price": order.total_price,
+        "waiting_time": order.waiting_time,
+        "accepted_at_ts": int(order.accepted_at.timestamp()),
         "items": [{"name": item.dish.name, "quantity": item.quantity} for item in order.cart.items]
     })
+
+
+@owner_bp.route("/orders/<int:order_id>/deliver", methods=["POST"])
+def deliver_order(order_id):
+    order = Order.query.get_or_404(order_id)
+    curr = order.status if not isinstance(order.status, str) else StatusOrder[order.status]
+    if curr != StatusOrder.ACCEPTED:
+        return jsonify({"error": "Chỉ chuyển sang DELIVERING từ ACCEPTED"}), 400
+
+    order.status = StatusOrder.DELIVERING
+    db.session.commit()
+    return jsonify({"order_id": order.order_id, "status": order.status.value})
+
+
+@owner_bp.route("/orders/<int:order_id>/complete", methods=["POST"])
+def complete_order(order_id):
+    from OrderFood.notifications import push_customer_noti_on_completed
+    order = Order.query.get_or_404(order_id)
+    curr = order.status if not isinstance(order.status, str) else StatusOrder[order.status]
+    if curr != StatusOrder.DELIVERING:
+        return jsonify({"error": "Chỉ hoàn thành từ DELIVERING"}), 400
+
+    order.status = StatusOrder.COMPLETED
+    db.session.commit()
+    push_customer_noti_on_completed(order)
+    return jsonify({"order_id": order.order_id, "status": order.status.value})
 
 @owner_bp.route("/orders/<int:order_id>/cancel", methods=["POST"])
 def cancel_order(order_id):
@@ -230,26 +261,32 @@ def cancel_order(order_id):
     data = request.get_json(silent=True) or {}
     reason = (data.get("reason") or "").strip()
 
-    # Chỉ cho phép hủy khi đang PAID hoặc ACCEPTED (tùy bạn, có thể nới lỏng)
-    allowed = {StatusOrder.PAID, StatusOrder.ACCEPTED}
+    allowed = {StatusOrder.PAID, StatusOrder.ACCEPTED, StatusOrder.DELIVERING}
     curr = order.status if not isinstance(order.status, str) else StatusOrder[order.status]
     if curr not in allowed:
-        return jsonify({"error": "Chỉ hủy đơn ở trạng thái PAID/ACCEPTED"}), 400
+        return jsonify({"error": "Chỉ hủy đơn ở trạng thái PAID/ACCEPTED/DELIVERING"}), 400
 
-    # Cập nhật trạng thái + đánh dấu người hủy
     order.status = StatusOrder.CANCELED
     order.canceled_by = Role.RESTAURANT_OWNER
-    db.session.add(order)
-    db.session.commit()
 
-    # Gửi thông báo cho KH
+    payment = Payment.query.filter_by(order_id=order_id).first()
+    if payment and payment.status == StatusPayment.PAID:
+        payment.status = StatusPayment.REFUND
+        db.session.add(Refund(
+            payment_id=payment.payment_id,
+            status=StatusRefund.REQUESTED,
+            reason=reason or "Nhà hàng hủy đơn",
+        ))
+
+    db.session.commit()
     push_customer_noti_on_owner_cancel(order, reason)
 
     return jsonify({
         "order_id": order.order_id,
         "status": order.status.value,
         "customer_name": order.customer.user.name,
-        "reason": reason
+        "reason": reason,
+        "refunded": payment is not None and payment.status == StatusPayment.REFUND,
     })
 
 
@@ -292,6 +329,9 @@ def update_restaurant():
         restaurant.close_hour = data.get("close_hour", restaurant.close_hour)
         restaurant.is_open = data.get("is_open", restaurant.is_open)
         owner.tax = data.get("tax", owner.tax)
+        if "prep_time" in data:
+            pt = int(data["prep_time"])
+            restaurant.prep_time = max(1, min(10, pt))
         db.session.commit()
         return jsonify({"success": True})
     except Exception as e:
