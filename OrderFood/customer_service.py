@@ -57,6 +57,9 @@ def is_restaurant_open(restaurant):
 from flask import session
 from sqlalchemy import func
 
+
+from OrderFood.models import OrderRating, Order, db
+
 @customer_bp.route("/restaurant/<int:restaurant_id>")
 def restaurant_detail(restaurant_id):
     res = dao_cus.get_restaurant_by_id(restaurant_id)
@@ -77,17 +80,24 @@ def restaurant_detail(restaurant_id):
         cart = dao_cus.get_active_cart(user_id, res.restaurant_id)
         cart_items_count = dao_cus.count_cart_items(cart)
 
+        # Dùng Order.restaurant_id thay vì Order.res_id
+        ratings = db.session.query(OrderRating) \
+            .join(Order, OrderRating.order_id == Order.order_id) \
+            .filter(Order.restaurant_id == restaurant_id) \
+            .order_by(OrderRating.orating_id.desc()) \
+            .all()
+
     return render_template(
         "/customer/restaurant_detail.html",
         res=res,
-        dishes=dishes, 
+        dishes=dishes,
         stars=stars,
         categories=categories,
         cart_items_count=cart_items_count,
-        dishes_by_category=dishes_by_category, 
-        is_open=is_open
+        dishes_by_category=dishes_by_category,
+        is_open=is_open,
+        ratings=ratings # Truyền biến ratings sang HTML
     )
-
 
 
 

@@ -10,6 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     saveBtn.addEventListener("click", () => {
         const prepTimeEl = document.getElementById("prep-time");
+
         const data = {
             name: document.getElementById("name").value,
             address: document.getElementById("address").value,
@@ -18,6 +19,10 @@ document.addEventListener("DOMContentLoaded", () => {
             is_open: document.getElementById("toggle-open").checked,
             tax: document.getElementById("tax").value,
             prep_time: prepTimeEl ? Math.max(1, Math.min(10, parseInt(prepTimeEl.value) || 10)) : undefined,
+
+            // === 2 DÒNG MỚI THÊM VÀO ĐỂ LẤY TỌA ĐỘ BẢN ĐỒ ===
+            latitude: document.getElementById("latitude").value,
+            longitude: document.getElementById("longitude").value
         };
 
         fetch("/owner/restaurant/update", {

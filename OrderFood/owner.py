@@ -353,16 +353,24 @@ def update_restaurant():
         restaurant.close_hour = data.get("close_hour", restaurant.close_hour)
         restaurant.is_open = data.get("is_open", restaurant.is_open)
         owner.tax = data.get("tax", owner.tax)
+
+        # === THÊM: Lấy và lưu tọa độ ===
+        lat_val = data.get("latitude")
+        lng_val = data.get("longitude")
+        if lat_val and str(lat_val).strip() != "":
+            restaurant.latitude = float(lat_val)
+        if lng_val and str(lng_val).strip() != "":
+            restaurant.longitude = float(lng_val)
+
         if "prep_time" in data:
             pt = int(data["prep_time"])
             restaurant.prep_time = max(1, min(10, pt))
+
         db.session.commit()
         return jsonify({"success": True})
     except Exception as e:
         db.session.rollback()
         return jsonify({"success": False, "error": str(e)}), 500
-
-
 @owner_bp.route("/res_register", methods=["GET", "POST"])
 def res_register():
     if request.method == "GET":

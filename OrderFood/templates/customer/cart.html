@@ -2,9 +2,12 @@
 {% block title %}Giỏ hàng{% endblock %}
 
 {% block content %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
 <link rel="stylesheet" href="{{ url_for('static', filename='css/client/cart.css') }}"/>
 
-<div class="container ct-cart">
+<div class="container ct-cart mb-5">
   <h1 class="ct-title">Giỏ Hàng</h1>
 
   {% if cart_items %}
@@ -57,20 +60,45 @@
   {% if cart and cart.items|length > 0 %}
     {% set rid = cart.res_id if cart and cart.res_id else (cart.restaurant.restaurant_id if cart and cart.restaurant else None) %}
     <form method="POST" action="{{ url_for('vnpay.checkout_vnpay', restaurant_id=rid) }}" id="checkout-form">
-      <div class="mt-3">
-        <label class="form-label fw-semibold">Địa chỉ giao hàng <span class="text-danger">*</span></label>
-        <input type="text" name="delivery_address" id="delivery-address" class="form-control"
-               value="{{ user_address }}"
-               placeholder="Ví dụ: 123 Nguyễn Văn A, Quận 1, TP.HCM"
-               required maxlength="255">
-        <div class="invalid-feedback">Vui lòng nhập địa chỉ giao hàng.</div>
+
+      <div class="card mt-4 border-primary">
+          <div class="card-header bg-primary text-white fw-bold">
+              <i class="fas fa-map-marker-alt"></i> Thông tin giao hàng
+          </div>
+          <div class="card-body">
+              <label class="form-label fw-semibold">Địa chỉ giao hàng <span class="text-danger">*</span></label>
+
+              <div class="input-group mb-3">
+                  <input type="text" name="delivery_address" id="delivery-address" class="form-control"
+                         value="{{ user_address }}"
+                         placeholder="Hệ thống đang tự động lấy vị trí của bạn..."
+                         required maxlength="255">
+                  <button class="btn btn-outline-primary" type="button" id="btn-current-location" title="Lấy lại vị trí">
+                      <i class="fas fa-crosshairs"></i> Vị trí hiện tại
+                  </button>
+              </div>
+              <div class="invalid-feedback">Vui lòng nhập địa chỉ giao hàng.</div>
+
+              <p class="text-muted small mb-2">Bạn có thể kéo thả ghim trên bản đồ để chọn chính xác điểm giao hàng.</p>
+              <div id="checkout-map" style="height: 300px; width: 100%; border-radius: 8px; border: 1px solid #ccc; z-index: 1;"></div>
+
+              <input type="hidden" name="latitude" id="lat-input">
+              <input type="hidden" name="longitude" id="lng-input">
+          </div>
       </div>
-      <div class="ct-actions mt-3">
-        <button type="submit" class="ct-btn-pay" onclick="return validateCheckout()">
-          <img src="{{ url_for('static', filename='img/vnpay.jpg') }}" alt="VNPay" class="ct-pay-logo" loading="lazy">
-          Thanh toán VNPay
-        </button>
-      </div>
+      <div class="ct-actions mt-4">
+    <button type="submit" class="btn w-100 d-flex align-items-center justify-content-center"
+            onclick="return validateCheckout()"
+            style="background-color: #005baa; color: white; border-radius: 8px; padding: 12px 20px; border: none; font-size: 1.1rem; font-weight: 600; box-shadow: 0 4px 6px rgba(0,91,170,0.2); transition: all 0.3s ease;">
+
+        <div style="background: white; border-radius: 6px; padding: 4px; display: flex; margin-right: 12px;">
+            <img src="{{ url_for('static', filename='img/vnpay.jpg') }}" alt="VNPay"
+                 style="width: 32px; height: 32px; object-fit: contain; border-radius: 4px;" loading="lazy">
+        </div>
+
+        <span>Xác nhận & Thanh toán VNPay</span>
+    </button>
+</div>
     </form>
   {% endif %}
 
@@ -80,11 +108,96 @@
 </div>
 
 <script src="{{ url_for('static', filename='js/customer/cart.js') }}"></script>
+
 <script>
+window.addEventListener('load', function() {
+    if (typeof L === 'undefined') return;
+
+    // Mặc định trung tâm TP.HCM nếu không lấy được vị trí
+    const defaultLat = 10.7769;
+    const defaultLng = 106.7009;
+
+    const map = L.map('checkout-map').setView([defaultLat, defaultLng], 15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+
+    const marker = L.marker([defaultLat, defaultLng], { draggable: true }).addTo(map);
+    const addressInput = document.getElementById('delivery-address');
+    const latInput = document.getElementById('lat-input');
+    const lngInput = document.getElementById('lng-input');
+    const btnCurrentLoc = document.getElementById('btn-current-location');
+
+    // Hàm gọi API để dịch từ Tọa độ sang chữ Địa chỉ
+    function updateAddressFromLatLng(lat, lng) {
+        latInput.value = lat;
+        lngInput.value = lng;
+
+        // Đổi placeholder để báo hiệu đang tải
+        const oldVal = addressInput.value;
+        addressInput.placeholder = "Đang tìm địa chỉ...";
+
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.display_name) {
+                    addressInput.value = data.display_name;
+                }
+            })
+            .catch(err => console.error("Lỗi lấy địa chỉ:", err));
+    }
+
+    // Sự kiện 1: Khi kéo thả ghim
+    marker.on('dragend', function() {
+        const pos = marker.getLatLng();
+        updateAddressFromLatLng(pos.lat, pos.lng);
+    });
+
+    // Sự kiện 2: Khi click trên bản đồ
+    map.on('click', function(e) {
+        marker.setLatLng(e.latlng);
+        updateAddressFromLatLng(e.latlng.lat, e.latlng.lng);
+    });
+
+    // Hàm xin quyền và lấy vị trí GPS hiện tại
+    function locateUser() {
+        btnCurrentLoc.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang tìm...';
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    const userLat = position.coords.latitude;
+                    const userLng = position.coords.longitude;
+
+                    // Bay đến vị trí của khách
+                    map.setView([userLat, userLng], 17);
+                    marker.setLatLng([userLat, userLng]);
+                    updateAddressFromLatLng(userLat, userLng);
+
+                    btnCurrentLoc.innerHTML = '<i class="fas fa-crosshairs"></i> Vị trí hiện tại';
+                },
+                function(error) {
+                    console.log("Khách hàng từ chối vị trí hoặc lỗi GPS.");
+                    btnCurrentLoc.innerHTML = '<i class="fas fa-crosshairs"></i> Vị trí hiện tại';
+                },
+                { enableHighAccuracy: true, timeout: 5000 }
+            );
+        }
+    }
+
+    // TỰ ĐỘNG CHẠY KHI VỪA VÀO TRANG
+    locateUser();
+
+    // CHẠY KHI KHÁCH BẤM NÚT TÌM LẠI VỊ TRÍ
+    btnCurrentLoc.addEventListener('click', locateUser);
+});
+
+// Validate của bạn giữ nguyên
 function validateCheckout() {
   const addr = document.getElementById('delivery-address');
   if (!addr || !addr.value.trim()) {
     addr && addr.classList.add('is-invalid');
+    alert("Vui lòng xác nhận địa chỉ giao hàng!");
     return false;
   }
   return true;

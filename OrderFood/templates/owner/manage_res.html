@@ -3,7 +3,10 @@
 {% block title %}Quản lý Nhà hàng{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<div class="container mt-4 mb-5">
     <h3>Quản lý Nhà hàng</h3>
     <div class="card p-3 shadow-sm">
         <input type="hidden" id="restaurant-id" value="{{ restaurant.restaurant_id }}">
@@ -15,7 +18,32 @@
 
         <div class="mb-3">
             <label class="form-label">Địa chỉ</label>
-            <input type="text" class="form-control" id="address" value="{{ restaurant.address }}">
+            <div class="input-group">
+                <input type="text" class="form-control" id="address" value="{{ restaurant.address }}">
+                <button class="btn btn-outline-secondary" type="button" id="btn-search-addr">
+                    <i class="fas fa-search-location"></i> Tìm trên bản đồ
+                </button>
+            </div>
+        </div>
+
+        <div class="card mb-4 border-info">
+            <div class="card-header bg-info text-white">
+                <i class="fas fa-map-marker-alt"></i> Vị trí trên bản đồ
+            </div>
+            <div class="card-body">
+                <div id="map" style="height: 350px; width: 100%; border-radius: 8px; border: 1px solid #ccc; margin-bottom: 15px; z-index: 1;"></div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-2">
+                        <label class="form-label text-muted small">Vĩ độ (Latitude)</label>
+                        <input type="text" class="form-control bg-light" id="latitude" value="{{ restaurant.latitude or '' }}" readonly>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <label class="form-label text-muted small">Kinh độ (Longitude)</label>
+                        <input type="text" class="form-control bg-light" id="longitude" value="{{ restaurant.longitude or '' }}" readonly>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="mb-3">
@@ -55,6 +83,73 @@
         <button class="btn btn-primary" id="save-btn">Lưu thay đổi</button>
     </div>
 </div>
+
+<script>
+window.addEventListener('load', function() {
+    if (typeof L === 'undefined') return;
+
+    // Lấy tọa độ hiện tại từ value của thẻ input, nếu rỗng thì dùng mặc định
+    const latInput = document.getElementById('latitude');
+    const lngInput = document.getElementById('longitude');
+    const addrInput = document.getElementById('address');
+
+    let currentLat = latInput.value ? parseFloat(latInput.value) : 10.7769;
+    let currentLng = lngInput.value ? parseFloat(lngInput.value) : 106.7009;
+
+    const map = L.map('map').setView([currentLat, currentLng], 15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+
+    const marker = L.marker([currentLat, currentLng], { draggable: true }).addTo(map);
+
+    // Nếu lúc trước chưa có tọa độ, set sẵn tọa độ mặc định để dễ lưu
+    if (!latInput.value) latInput.value = currentLat.toFixed(6);
+    if (!lngInput.value) lngInput.value = currentLng.toFixed(6);
+
+    function updateAddressFromLatLng(lat, lng) {
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.display_name) addrInput.value = data.display_name;
+            });
+    }
+
+    marker.on('dragend', function(e) {
+        const pos = marker.getLatLng();
+        latInput.value = pos.lat.toFixed(6);
+        lngInput.value = pos.lng.toFixed(6);
+        updateAddressFromLatLng(pos.lat, pos.lng);
+    });
+
+    map.on('click', function(e) {
+        marker.setLatLng(e.latlng);
+        latInput.value = e.latlng.lat.toFixed(6);
+        lngInput.value = e.latlng.lng.toFixed(6);
+        updateAddressFromLatLng(e.latlng.lat, e.latlng.lng);
+    });
+
+    document.getElementById('btn-search-addr').addEventListener('click', function() {
+        const query = addrInput.value;
+        if (!query) return alert("Vui lòng nhập địa chỉ trước.");
+
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.length > 0) {
+                    const newLat = parseFloat(data[0].lat);
+                    const newLng = parseFloat(data[0].lon);
+                    map.setView([newLat, newLng], 16);
+                    marker.setLatLng([newLat, newLng]);
+                    latInput.value = newLat.toFixed(6);
+                    lngInput.value = newLng.toFixed(6);
+                } else {
+                    alert("Không tìm thấy địa chỉ này trên bản đồ.");
+                }
+            });
+    });
+});
+</script>
 
 <script src="{{ url_for('static', filename='js/owner/manage_res.js') }}"></script>
 {% endblock %}
