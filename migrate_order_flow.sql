@@ -1,0 +1,12 @@
+-- Migration: Order flow redesign
+-- Chay 1 lan tren MySQL orderfooddb
+
+ALTER TABLE `order`
+  MODIFY COLUMN status ENUM('PENDING','PAID','ACCEPTED','DELIVERING','CANCELED','COMPLETED')
+  NOT NULL DEFAULT 'PENDING';
+
+ALTER TABLE `order`
+  ADD COLUMN IF NOT EXISTS accepted_at DATETIME NULL DEFAULT NULL;
+
+ALTER TABLE restaurant
+  ADD COLUMN IF NOT EXISTS prep_time INT NOT NULL DEFAULT 10;

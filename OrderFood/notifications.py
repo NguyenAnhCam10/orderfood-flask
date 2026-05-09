@@ -83,6 +83,14 @@ def push_both_noti(order: Order, message: str) -> None:
     _add_noti(order.order_id, message,
               customer_id=order.customer_id, owner_id=owner_uid)
 
+def push_owner_noti_on_customer_cancel(order: Order) -> None:
+    """Khi customer hủy đơn PENDING -> noti cho OWNER."""
+    owner_uid = _owner_user_id_from_order(order)
+    if owner_uid:
+        _add_noti(order.order_id, f"Khách hàng đã hủy đơn hàng #{order.order_id}.",
+                  customer_id=None, owner_id=owner_uid)
+
+
 def push_customer_noti_on_owner_cancel(order: Order, reason: str) -> None:
     """Khi chủ nhà hàng hủy đơn -> noti cho CUSTOMER kèm lý do."""
     if not order or not order.customer_id:

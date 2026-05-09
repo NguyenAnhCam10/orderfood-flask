@@ -9,8 +9,10 @@ from OrderFood.dao import customer_dao as dao_cus
 from OrderFood.models import (
     Restaurant, Dish, Category,
     Cart, CartItem, Customer,
-    Order, StatusOrder, StatusCart, Notification, OrderRating, User
+    Order, StatusOrder, StatusCart, Notification, OrderRating, User, Role,
+    Payment, Refund, StatusPayment, StatusRefund
 )
+from OrderFood.notifications import push_owner_noti_on_customer_cancel
 
 customer_bp = Blueprint("customer", __name__)
 
@@ -192,14 +194,8 @@ def my_orders():
 @customer_bp.route("/customer")
 def customer_home():
     if not is_customer(session.get("role")):
-        return redirect(url_for("login"))
-
-    restaurants = dao_cus.list_top_restaurants(limit=50)
-    restaurants_with_stars = [
-        {"restaurant": r, "stars": dao_cus.get_star_display(r.rating_point or 0)}
-        for r in restaurants
-    ]
-    return render_template("customer_home.html", restaurants=restaurants_with_stars)
+        return redirect(url_for("index.login"))
+    return redirect(url_for("index.index"))
 
 
 @customer_bp.route("/notifications/json")
@@ -242,6 +238,39 @@ def notifications_mark_all_read():
     return jsonify({"ok": True})
 
 
+@customer_bp.route("/order/<int:order_id>/cancel", methods=["POST"])
+def cancel_order(order_id):
+    uid = session.get("user_id")
+    if not uid or not is_customer(session.get("role")):
+        abort(403)
+
+    order = Order.query.get_or_404(order_id)
+    if order.customer_id != uid:
+        abort(403)
+
+    curr = order.status if isinstance(order.status, StatusOrder) else StatusOrder[order.status]
+    if curr != StatusOrder.PAID:
+        flash("Chỉ có thể hủy đơn khi nhà hàng chưa xác nhận (trạng thái PAID).", "warning")
+        return redirect(url_for("customer.order_track", order_id=order_id))
+
+    order.status = StatusOrder.CANCELED
+    order.canceled_by = Role.CUSTOMER
+
+    payment = Payment.query.filter_by(order_id=order_id).first()
+    if payment and payment.status == StatusPayment.PAID:
+        payment.status = StatusPayment.REFUND
+        db.session.add(Refund(
+            payment_id=payment.payment_id,
+            status=StatusRefund.REQUESTED,
+            reason="Khách hàng hủy đơn trước khi nhà hàng xác nhận",
+        ))
+
+    db.session.commit()
+    push_owner_noti_on_customer_cancel(order)
+    flash("Đơn hàng đã được hủy. Tiền sẽ được hoàn lại trong 3-5 ngày làm việc.", "success")
+    return redirect(url_for("customer.order_track", order_id=order_id))
+
+
 @customer_bp.route("/order/<int:order_id>/rate", methods=["POST"])
 def order_rate(order_id):
     uid = session.get("user_id") or abort(403)
@@ -274,7 +303,14 @@ def order_track(order_id):
     order = dao_cus.get_order_for_customer_or_admin(order_id, uid, role_upper)
 
     status_str = (getattr(order.status, "value", order.status) or "").upper()
-    active_idx, last_label, is_completed = dao_cus.compute_track_state(status_str)
+    active_idx, is_canceled, is_completed = dao_cus.compute_track_state(status_str)
+
+    accepted_at_ts = None
+    if order.accepted_at:
+        try:
+            accepted_at_ts = int(order.accepted_at.timestamp())
+        except Exception:
+            accepted_at_ts = None
 
     rated = OrderRating.query.filter_by(order_id=order_id, customer_id=uid).first()
     has_rated = bool(rated)
@@ -285,9 +321,10 @@ def order_track(order_id):
         "customer/order_track.html",
         order=order,
         active_idx=active_idx,
-        last_label=last_label,
         status_str=status_str,
+        is_canceled=is_canceled,
         is_completed=is_completed,
+        accepted_at_ts=accepted_at_ts,
         has_rated=has_rated,
         user_rating=user_rating,
         user_comment=user_comment,

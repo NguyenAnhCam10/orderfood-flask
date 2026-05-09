@@ -72,11 +72,17 @@
                   {% elif s=='COMPLETED' %}Hoàn tất
                   {% else %}{{ s }}{% endif %}
                 </span></td>
-                <td class="text-end">
+                <td class="text-end d-flex gap-1 justify-content-end">
                   <a class="btn btn-sm btn-outline-primary"
                      href="{{ url_for('customer.order_track', order_id=od.order_id) }}">
                     Theo dõi
                   </a>
+                  {% if s == 'PENDING' %}
+                    <form method="post" action="{{ url_for('customer.cancel_order', order_id=od.order_id) }}"
+                          onsubmit="return confirm('Hủy đơn #{{ od.order_id }}?')">
+                      <button type="submit" class="btn btn-sm btn-danger">Hủy</button>
+                    </form>
+                  {% endif %}
                 </td>
               </tr>
             {% endfor %}
