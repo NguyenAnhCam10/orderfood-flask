@@ -154,6 +154,18 @@
                                 {% endfor %}
                             </span>
                         </div>
+
+                        <div class="mb-2">
+                            <small class="text-muted">
+                                <i class="fas fa-utensils me-1"></i> Đã mua:
+                                {% for item in r.order.cart.items %}
+                                    <span class="badge bg-white text-dark border fw-normal">
+                                        {{ item.dish.name }} x{{ item.quantity }}
+                                    </span>
+                                {% endfor %}
+                            </small>
+                        </div>
+
                         <p class="mb-0 text-dark fst-italic">"{{ r.comment or 'Khách hàng không để lại bình luận.' }}"</p>
                     </div>
                 </div>

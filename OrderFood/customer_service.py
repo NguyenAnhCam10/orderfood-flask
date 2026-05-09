@@ -81,11 +81,11 @@ def restaurant_detail(restaurant_id):
         cart_items_count = dao_cus.count_cart_items(cart)
 
         # Dùng Order.restaurant_id thay vì Order.res_id
-        ratings = db.session.query(OrderRating) \
-            .join(Order, OrderRating.order_id == Order.order_id) \
-            .filter(Order.restaurant_id == restaurant_id) \
-            .order_by(OrderRating.orating_id.desc()) \
-            .all()
+    ratings = db.session.query(OrderRating) \
+        .join(Order, OrderRating.order_id == Order.order_id) \
+        .filter(Order.restaurant_id == restaurant_id) \
+        .order_by(OrderRating.orating_id.desc()) \
+        .all()
 
     return render_template(
         "/customer/restaurant_detail.html",
