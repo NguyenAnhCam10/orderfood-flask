@@ -70,9 +70,9 @@
                 <h5 id="cate{{ category.id }}" style="margin-top:-0.5rem;">{{ category.name }} </h5>
                 <div class="row">
                     {% for dish in dishes %}
-                    {% if dish.category_id == category.category_id %}
-                    <div class="col-12 mb-3">   <!-- 1 món = 1 dòng -->
-                        <div class="card h-100 shadow-sm">
+                    {% if dish.category_id == category.category_id and dish.status.value != 'UNAVAILABLE' %}
+                    <div class="col-12 mb-3">
+                        <div class="card h-100 shadow-sm {% if dish.status.value == 'OUT_OF_STOCK' %}opacity-50{% endif %}">
                             <div class="row g-0">
                                 <!-- Hình ảnh món -->
                                 <div class="col-3">
@@ -93,9 +93,15 @@
                                                 display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical;">
                                                 {{ dish.note }}
                                             </p>
-                                            <span class="fw-bold text-danger mt-auto">{{ dish.price|vnd }}</span>
+                                            <div class="mt-auto d-flex align-items-center gap-2">
+                                                <span class="fw-bold text-danger">{{ dish.price|vnd }}</span>
+                                                {% if dish.status.value == 'OUT_OF_STOCK' %}
+                                                <span class="badge bg-secondary">Hết hàng</span>
+                                                {% endif %}
+                                            </div>
                                         </div>
                                         <div class="col-2 d-flex align-items-center justify-content-end">
+                                            {% if dish.status.value == 'AVAILABLE' %}
                                             <a href="#" class="btn btn-success btn-sm add-dish-btn"
                                                data-id="{{ dish.dish_id }}"
                                                data-name="{{ dish.name|e }}"
@@ -105,11 +111,12 @@
                                                data-res="{{ res.restaurant_id }}">
                                                 +
                                             </a>
+                                            {% else %}
+                                            <button class="btn btn-secondary btn-sm" disabled>+</button>
+                                            {% endif %}
                                         </div>
                                     </div>
                                 </div>
-
-
                             </div>
                         </div>
                     </div>

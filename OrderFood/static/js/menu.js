@@ -3,6 +3,20 @@ function formatVnd(value) {
     return amount.toLocaleString('vi-VN') + 'đ';
 }
 
+const STATUS_LABEL = {
+    AVAILABLE: 'Có sẵn',
+    OUT_OF_STOCK: 'Hết hàng',
+    UNAVAILABLE: 'Tạm ẩn'
+};
+
+function buildStatusSelect(dishId, currentStatus) {
+    return `<select class="form-select form-select-sm dish-status-select" data-dish-id="${dishId}" style="width:auto;display:inline-block;">
+        <option value="AVAILABLE" ${currentStatus === 'AVAILABLE' ? 'selected' : ''}>Có sẵn</option>
+        <option value="OUT_OF_STOCK" ${currentStatus === 'OUT_OF_STOCK' ? 'selected' : ''}>Hết hàng</option>
+        <option value="UNAVAILABLE" ${currentStatus === 'UNAVAILABLE' ? 'selected' : ''}>Tạm ẩn</option>
+    </select>`;
+}
+
 async function addDish() {
     const addDishForm = document.getElementById('addDishForm');
 
@@ -16,7 +30,7 @@ async function addDish() {
         if (imageFile) {
             const cloudData = new FormData();
             cloudData.append('file', imageFile);
-            cloudData.append('upload_preset', 'ml_default'); // tên preset unsigned của bạn
+            cloudData.append('upload_preset', 'ml_default');
 
             try {
                 const cloudRes = await fetch('https://api.cloudinary.com/v1_1/dlwjqml4p/image/upload', {
@@ -41,12 +55,12 @@ async function addDish() {
             const data = await res.json();
             if (data.success) {
                 alert('Thêm món thành công');
-               const collapse = bootstrap.Collapse.getInstance(addDishContainer);
+                const addDishContainer = document.getElementById('addDishContainer');
+                const collapse = bootstrap.Collapse.getInstance(addDishContainer);
                 if (collapse) {
                     collapse.hide();
                 }
 
-                // reset form
                 addDishForm.reset();
 
                 const dish = data.dish;
@@ -59,40 +73,21 @@ async function addDish() {
                     newRow.dataset.price = dish.price;
                     newRow.dataset.category = dish.category;
                     newRow.dataset.image = dish.image;
-                    newRow.dataset.active = dish.active ? '1' : '0';
+                    newRow.dataset.status = dish.status || 'AVAILABLE';
 
                     newRow.innerHTML = `
                         <td class="text-center">${dish.name}</td>
                         <td class="text-center text-truncate" style="max-width:150px;">${dish.note || "Chưa có mô tả"}</td>
                         <td class="text-center">${formatVnd(dish.price)}</td>
                         <td class="text-center">${dish.category || '-'}</td>
+                        <td class="text-center">${buildStatusSelect(dish.dish_id, dish.status || 'AVAILABLE')}</td>
                         <td class="text-center">
-                            <button type="submit" class="btn btn-danger btn-sm middle">Xóa</button>
+                            <button type="button" class="btn btn-danger btn-sm middle">Xóa</button>
                         </td>
                     `;
                     dishesTableBody.appendChild(newRow);
-
-                    newRow.addEventListener('click', () => {
-                        const id = newRow.dataset.id;
-                        const name = newRow.dataset.name;
-                        const note = newRow.dataset.note;
-                        const price = newRow.dataset.price;
-                        const category = newRow.dataset.category;
-                        const image = newRow.dataset.image;
-                        const active = newRow.dataset.active === '1';
-
-                        document.getElementById('editDishId').value = id;
-                        document.getElementById('editName').value = name;
-                        document.getElementById('editNote').value = note;
-                        document.getElementById('editPrice').value = price;
-                        document.getElementById('editCategory').value = category;
-                        document.getElementById('editImagePreview').src = image || '';
-                        document.getElementById('editActive').checked = active;
-
-                        const editForm = new bootstrap.Collapse(document.getElementById('editDishForm'), { show: true });
-                    });
+                    attachRowClickListener(newRow);
                 }
-
 
                 if (dish.category) {
                     const exists = Array.from(categorySelect.options)
@@ -105,8 +100,6 @@ async function addDish() {
                         categorySelect.insertBefore(newOpt, newOption);
                     }
                 }
-
-                // Ẩn input thêm cate
 
                 newCategoryInput.classList.add('d-none');
                 newCategoryInput.required = false;
@@ -128,49 +121,49 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
-
-
 let currentRowId = null;
 
-document.querySelectorAll('.dish-row').forEach(row => {
-    row.addEventListener('click', () => {
+function attachRowClickListener(row) {
+    row.addEventListener('click', (e) => {
+        // không mở edit form khi click vào select hoặc nút xóa
+        if (e.target.closest('.dish-status-select') || e.target.classList.contains('btn-danger')) return;
+
         const id = row.dataset.id;
         const name = row.dataset.name;
         const note = row.dataset.note;
         const price = row.dataset.price;
         const category = row.dataset.category;
         const image = row.dataset.image;
-        const active = row.dataset.active === '1';
+        const status = row.dataset.status || 'AVAILABLE';
 
         const editFormEl = document.getElementById('editDishForm');
         const collapse = bootstrap.Collapse.getOrCreateInstance(editFormEl);
 
         if (currentRowId === id && editFormEl.classList.contains('show')) {
-            // Click lại cùng row -> ẩn form
             collapse.hide();
             currentRowId = null;
             return;
         }
 
-        // Cập nhật dữ liệu vào form
         document.getElementById('editDishId').value = id;
         document.getElementById('editName').value = name;
         document.getElementById('editNote').value = note;
         document.getElementById('editPrice').value = price;
         document.getElementById('editCategory').value = category;
         document.getElementById('editImagePreview').src = image || '';
-        document.getElementById('editActive').checked = active;
+        document.getElementById('editStatus').value = status;
 
-        // Hiển thị form
         collapse.show();
         currentRowId = id;
     });
+}
+
+document.querySelectorAll('.dish-row').forEach(row => {
+    attachRowClickListener(row);
 });
 
 
-
-
-    const categorySelect = document.getElementById('categorySelect');
+const categorySelect = document.getElementById('categorySelect');
 const newCategoryInput = document.getElementById('newCategoryInput');
 
 categorySelect.addEventListener('change', () => {
@@ -184,8 +177,6 @@ categorySelect.addEventListener('change', () => {
 });
 
 
-
-
 const editDishForm = document.querySelector('#editDishForm form');
 
 editDishForm.addEventListener('submit', async function(e) {
@@ -194,11 +185,6 @@ editDishForm.addEventListener('submit', async function(e) {
     const formData = new FormData(editDishForm);
     const dishId = document.getElementById('editDishId').value;
 
-    // ✅ gửi is_available rõ ràng 1/0
-    const isAvailable = document.getElementById("editActive").checked;
-    formData.set("is_available", isAvailable ? "1" : "0");
-
-    // xử lý upload cloudinary nếu có ảnh mới
     let imageFile = document.getElementById('editImage').files[0];
     if (imageFile) {
         const cloudData = new FormData();
@@ -237,15 +223,16 @@ editDishForm.addEventListener('submit', async function(e) {
                 row.dataset.price = dish.price;
                 row.dataset.category = dish.category;
                 row.dataset.image = dish.image;
-                row.dataset.active = dish.is_available ? '1' : '0';
+                row.dataset.status = dish.status;
 
                 row.innerHTML = `
                     <td class="text-center">${dish.name}</td>
                     <td class="text-center text-truncate" style="max-width:150px;">${dish.note || "Chưa có mô tả"}</td>
                     <td class="text-center">${formatVnd(dish.price)}</td>
                     <td class="text-center">${dish.category || '-'}</td>
+                    <td class="text-center">${buildStatusSelect(dish.dish_id, dish.status)}</td>
                     <td class="text-center">
-                        <button type="submit" class="btn btn-danger btn-sm middle">Xóa</button>
+                        <button type="button" class="btn btn-danger btn-sm middle">Xóa</button>
                     </td>
                 `;
             }
@@ -263,8 +250,7 @@ editDishForm.addEventListener('submit', async function(e) {
 });
 
 
-// xoa
-
+// Xóa món
 const dishesTableBody = document.getElementById('dishesTableBody');
 
 dishesTableBody.addEventListener('click', async function(e) {
@@ -300,5 +286,36 @@ dishesTableBody.addEventListener('click', async function(e) {
             console.error("Lỗi xoá món ăn:", err);
             alert("Lỗi server khi xoá món ăn");
         }
+    }
+});
+
+
+// Toggle status nhanh từ dropdown trong bảng
+dishesTableBody.addEventListener('change', async function(e) {
+    if (!e.target.classList.contains('dish-status-select')) return;
+    e.stopPropagation();
+
+    const dishId = e.target.dataset.dishId;
+    const newStatus = e.target.value;
+    const row = e.target.closest('.dish-row');
+
+    try {
+        const res = await fetch(`/owner/menu/${dishId}/status`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: newStatus })
+        });
+        const data = await res.json();
+        if (data.success) {
+            row.dataset.status = data.status;
+        } else {
+            alert(data.error || "Cập nhật thất bại");
+            // revert
+            e.target.value = row.dataset.status;
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Lỗi server");
+        e.target.value = row.dataset.status;
     }
 });

@@ -63,6 +63,7 @@
                 <th style="width:150px;" class="text-center">Mô tả</th>
                 <th class="text-center">Giá</th>
                 <th class="text-center">Category</th>
+                <th class="text-center">Trạng thái</th>
                 <th class="text-center">Xóa</th>
             </tr>
             </thead>
@@ -74,11 +75,18 @@
                 data-price="{{ dish.price }}"
                 data-category="{{ dish.category.name if dish.category else '' }}"
                 data-image="{{ dish.image }}"
-                data-active="{{ '1' if dish.is_available else '0' }}">
+                data-status="{{ dish.status.value }}">
                 <td class="text-center">{{ dish.name }}</td>
                 <td class="text-center text-truncate" style="max-width:150px;">{{ dish.note or "Chưa có mô tả" }}</td>
                 <td class="text-center">{{ dish.price|vnd }}</td>
                 <td class="text-center">{{ dish.category.name if dish.category else "-" }}</td>
+                <td class="text-center">
+                    <select class="form-select form-select-sm dish-status-select" data-dish-id="{{ dish.dish_id }}" style="width:auto;display:inline-block;">
+                        <option value="AVAILABLE" {% if dish.status.value == 'AVAILABLE' %}selected{% endif %}>Có sẵn</option>
+                        <option value="OUT_OF_STOCK" {% if dish.status.value == 'OUT_OF_STOCK' %}selected{% endif %}>Hết hàng</option>
+                        <option value="UNAVAILABLE" {% if dish.status.value == 'UNAVAILABLE' %}selected{% endif %}>Tạm ẩn</option>
+                    </select>
+                </td>
                 <td class="text-center">
                     <button type="button" class="btn btn-danger btn-sm middle">Xóa</button>
                 </td>
@@ -123,9 +131,13 @@
                     <label for="editImage" class="form-label">Thay hình ảnh mới</label>
                     <input type="file" class="form-control" name="image" id="editImage">
                 </div>
-                <div class="mb-3 form-check">
-                    <input type="checkbox" class="form-check-input" id="editActive" name="is_available">
-                    <label class="form-check-label" for="editActive">Active</label>
+                <div class="mb-3">
+                    <label for="editStatus" class="form-label">Trạng thái</label>
+                    <select class="form-select" id="editStatus" name="status">
+                        <option value="AVAILABLE">Có sẵn</option>
+                        <option value="OUT_OF_STOCK">Hết hàng</option>
+                        <option value="UNAVAILABLE">Tạm ẩn</option>
+                    </select>
                 </div>
                 <button type="submit" class="btn btn-success">Lưu thay đổi</button>
             </form>

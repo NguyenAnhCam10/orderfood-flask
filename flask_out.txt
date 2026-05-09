@@ -1,0 +1,4 @@
+CLOUDINARY = dq7npllb4
+VNP HASH = 5MW0DLJ6PABDUE0WTC97O9N2IVIA40A2
+ * Serving Flask app 'OrderFood'
+ * Debug mode: on

@@ -288,7 +288,7 @@ def create_app():
                                 res_id=next_restaurant_id,
                                 category_id=cat.category_id,
                                 name=dish_name,
-                                is_available=True,
+                                status=models.DishStatus.AVAILABLE,
                                 price=random.randint(20000, 100000),
                                 note=f"Note {dish_name}",
                                 image="https://res.cloudinary.com/dlwjqml4p/image/upload/v1756870282/download_afjhjb.jpg",
