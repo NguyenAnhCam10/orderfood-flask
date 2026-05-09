@@ -1,0 +1,187 @@
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on http://127.0.0.1:5000
+Press CTRL+C to quit
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 702-370-875
+127.0.0.1 - - [09/May/2026 17:53:24] "GET /notifications/feed HTTP/1.1" 200 -
+Job "create_app.<locals>._run_job (trigger: interval[0:01:00], next run at: 2026-05-09 17:54:53 +07)" raised an exception
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\orderfood-flask\.venv\lib\site-packages\apscheduler\executors\base.py", line 131, in run_job
+    retval = job.func(*job.args, **job.kwargs)
+  File "C:\Users\LENOVO\orderfood-flask\OrderFood\__init__.py", line 391, in _run_job
+    cancel_expired_orders()
+  File "C:\Users\LENOVO\orderfood-flask\OrderFood\jobs.py", line 31, in cancel_expired_orders
+    print(f"[CANCEL] order #{o.order_id} quá h\u1ea1n {o.waiting_time} phút")
+  File "C:\Program Files\Python310\lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+UnicodeEncodeError: 'charmap' codec can't encode character '\u1ea1' in position 23: character maps to <undefined>
+127.0.0.1 - - [09/May/2026 17:54:24] "GET /notifications/feed HTTP/1.1" 200 -
+Job "create_app.<locals>._run_job (trigger: interval[0:01:00], next run at: 2026-05-09 17:55:53 +07)" raised an exception
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\orderfood-flask\.venv\lib\site-packages\apscheduler\executors\base.py", line 131, in run_job
+    retval = job.func(*job.args, **job.kwargs)
+  File "C:\Users\LENOVO\orderfood-flask\OrderFood\__init__.py", line 391, in _run_job
+    cancel_expired_orders()
+  File "C:\Users\LENOVO\orderfood-flask\OrderFood\jobs.py", line 31, in cancel_expired_orders
+    print(f"[CANCEL] order #{o.order_id} quá h\u1ea1n {o.waiting_time} phút")
+  File "C:\Program Files\Python310\lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+UnicodeEncodeError: 'charmap' codec can't encode character '\u1ea1' in position 23: character maps to <undefined>
+127.0.0.1 - - [09/May/2026 17:55:24] "GET /notifications/feed HTTP/1.1" 200 -
+Job "create_app.<locals>._run_job (trigger: interval[0:01:00], next run at: 2026-05-09 17:56:53 +07)" raised an exception
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\orderfood-flask\.venv\lib\site-packages\apscheduler\executors\base.py", line 131, in run_job
+    retval = job.func(*job.args, **job.kwargs)
+  File "C:\Users\LENOVO\orderfood-flask\OrderFood\__init__.py", line 391, in _run_job
+    cancel_expired_orders()
+  File "C:\Users\LENOVO\orderfood-flask\OrderFood\jobs.py", line 31, in cancel_expired_orders
+    print(f"[CANCEL] order #{o.order_id} quá h\u1ea1n {o.waiting_time} phút")
+  File "C:\Program Files\Python310\lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+UnicodeEncodeError: 'charmap' codec can't encode character '\u1ea1' in position 23: character maps to <undefined>
+127.0.0.1 - - [09/May/2026 17:56:24] "GET /notifications/feed HTTP/1.1" 200 -
+Job "create_app.<locals>._run_job (trigger: interval[0:01:00], next run at: 2026-05-09 17:57:53 +07)" raised an exception
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\orderfood-flask\.venv\lib\site-packages\apscheduler\executors\base.py", line 131, in run_job
+    retval = job.func(*job.args, **job.kwargs)
+  File "C:\Users\LENOVO\orderfood-flask\OrderFood\__init__.py", line 391, in _run_job
+    cancel_expired_orders()
+  File "C:\Users\LENOVO\orderfood-flask\OrderFood\jobs.py", line 31, in cancel_expired_orders
+    print(f"[CANCEL] order #{o.order_id} quá h\u1ea1n {o.waiting_time} phút")
+  File "C:\Program Files\Python310\lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+UnicodeEncodeError: 'charmap' codec can't encode character '\u1ea1' in position 23: character maps to <undefined>
+127.0.0.1 - - [09/May/2026 17:57:24] "GET /notifications/feed HTTP/1.1" 200 -
+Job "create_app.<locals>._run_job (trigger: interval[0:01:00], next run at: 2026-05-09 17:58:53 +07)" raised an exception
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\orderfood-flask\.venv\lib\site-packages\apscheduler\executors\base.py", line 131, in run_job
+    retval = job.func(*job.args, **job.kwargs)
+  File "C:\Users\LENOVO\orderfood-flask\OrderFood\__init__.py", line 391, in _run_job
+    cancel_expired_orders()
+  File "C:\Users\LENOVO\orderfood-flask\OrderFood\jobs.py", line 31, in cancel_expired_orders
+    print(f"[CANCEL] order #{o.order_id} quá h\u1ea1n {o.waiting_time} phút")
+  File "C:\Program Files\Python310\lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+UnicodeEncodeError: 'charmap' codec can't encode character '\u1ea1' in position 23: character maps to <undefined>
+127.0.0.1 - - [09/May/2026 17:58:24] "GET /notifications/feed HTTP/1.1" 200 -
+Job "create_app.<locals>._run_job (trigger: interval[0:01:00], next run at: 2026-05-09 17:59:53 +07)" raised an exception
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\orderfood-flask\.venv\lib\site-packages\apscheduler\executors\base.py", line 131, in run_job
+    retval = job.func(*job.args, **job.kwargs)
+  File "C:\Users\LENOVO\orderfood-flask\OrderFood\__init__.py", line 391, in _run_job
+    cancel_expired_orders()
+  File "C:\Users\LENOVO\orderfood-flask\OrderFood\jobs.py", line 31, in cancel_expired_orders
+    print(f"[CANCEL] order #{o.order_id} quá h\u1ea1n {o.waiting_time} phút")
+  File "C:\Program Files\Python310\lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+UnicodeEncodeError: 'charmap' codec can't encode character '\u1ea1' in position 23: character maps to <undefined>
+127.0.0.1 - - [09/May/2026 17:59:24] "GET /notifications/feed HTTP/1.1" 200 -
+Job "create_app.<locals>._run_job (trigger: interval[0:01:00], next run at: 2026-05-09 18:00:53 +07)" raised an exception
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\orderfood-flask\.venv\lib\site-packages\apscheduler\executors\base.py", line 131, in run_job
+    retval = job.func(*job.args, **job.kwargs)
+  File "C:\Users\LENOVO\orderfood-flask\OrderFood\__init__.py", line 391, in _run_job
+    cancel_expired_orders()
+  File "C:\Users\LENOVO\orderfood-flask\OrderFood\jobs.py", line 31, in cancel_expired_orders
+    print(f"[CANCEL] order #{o.order_id} quá h\u1ea1n {o.waiting_time} phút")
+  File "C:\Program Files\Python310\lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+UnicodeEncodeError: 'charmap' codec can't encode character '\u1ea1' in position 23: character maps to <undefined>
+127.0.0.1 - - [09/May/2026 18:00:24] "GET /notifications/feed HTTP/1.1" 200 -
+Job "create_app.<locals>._run_job (trigger: interval[0:01:00], next run at: 2026-05-09 18:01:53 +07)" raised an exception
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\orderfood-flask\.venv\lib\site-packages\apscheduler\executors\base.py", line 131, in run_job
+    retval = job.func(*job.args, **job.kwargs)
+  File "C:\Users\LENOVO\orderfood-flask\OrderFood\__init__.py", line 391, in _run_job
+    cancel_expired_orders()
+  File "C:\Users\LENOVO\orderfood-flask\OrderFood\jobs.py", line 31, in cancel_expired_orders
+    print(f"[CANCEL] order #{o.order_id} quá h\u1ea1n {o.waiting_time} phút")
+  File "C:\Program Files\Python310\lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+UnicodeEncodeError: 'charmap' codec can't encode character '\u1ea1' in position 23: character maps to <undefined>
+127.0.0.1 - - [09/May/2026 18:01:24] "GET /notifications/feed HTTP/1.1" 200 -
+Job "create_app.<locals>._run_job (trigger: interval[0:01:00], next run at: 2026-05-09 18:02:53 +07)" raised an exception
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\orderfood-flask\.venv\lib\site-packages\apscheduler\executors\base.py", line 131, in run_job
+    retval = job.func(*job.args, **job.kwargs)
+  File "C:\Users\LENOVO\orderfood-flask\OrderFood\__init__.py", line 391, in _run_job
+    cancel_expired_orders()
+  File "C:\Users\LENOVO\orderfood-flask\OrderFood\jobs.py", line 31, in cancel_expired_orders
+    print(f"[CANCEL] order #{o.order_id} quá h\u1ea1n {o.waiting_time} phút")
+  File "C:\Program Files\Python310\lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+UnicodeEncodeError: 'charmap' codec can't encode character '\u1ea1' in position 23: character maps to <undefined>
+127.0.0.1 - - [09/May/2026 18:02:24] "GET /notifications/feed HTTP/1.1" 200 -
+Job "create_app.<locals>._run_job (trigger: interval[0:01:00], next run at: 2026-05-09 18:03:53 +07)" raised an exception
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\orderfood-flask\.venv\lib\site-packages\apscheduler\executors\base.py", line 131, in run_job
+    retval = job.func(*job.args, **job.kwargs)
+  File "C:\Users\LENOVO\orderfood-flask\OrderFood\__init__.py", line 391, in _run_job
+    cancel_expired_orders()
+  File "C:\Users\LENOVO\orderfood-flask\OrderFood\jobs.py", line 31, in cancel_expired_orders
+    print(f"[CANCEL] order #{o.order_id} quá h\u1ea1n {o.waiting_time} phút")
+  File "C:\Program Files\Python310\lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+UnicodeEncodeError: 'charmap' codec can't encode character '\u1ea1' in position 23: character maps to <undefined>
+127.0.0.1 - - [09/May/2026 18:03:24] "GET /notifications/feed HTTP/1.1" 200 -
+Job "create_app.<locals>._run_job (trigger: interval[0:01:00], next run at: 2026-05-09 18:04:53 +07)" raised an exception
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\orderfood-flask\.venv\lib\site-packages\apscheduler\executors\base.py", line 131, in run_job
+    retval = job.func(*job.args, **job.kwargs)
+  File "C:\Users\LENOVO\orderfood-flask\OrderFood\__init__.py", line 391, in _run_job
+    cancel_expired_orders()
+  File "C:\Users\LENOVO\orderfood-flask\OrderFood\jobs.py", line 31, in cancel_expired_orders
+    print(f"[CANCEL] order #{o.order_id} quá h\u1ea1n {o.waiting_time} phút")
+  File "C:\Program Files\Python310\lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+UnicodeEncodeError: 'charmap' codec can't encode character '\u1ea1' in position 23: character maps to <undefined>
+127.0.0.1 - - [09/May/2026 18:04:24] "GET /notifications/feed HTTP/1.1" 200 -
+Job "create_app.<locals>._run_job (trigger: interval[0:01:00], next run at: 2026-05-09 18:05:53 +07)" raised an exception
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\orderfood-flask\.venv\lib\site-packages\apscheduler\executors\base.py", line 131, in run_job
+    retval = job.func(*job.args, **job.kwargs)
+  File "C:\Users\LENOVO\orderfood-flask\OrderFood\__init__.py", line 391, in _run_job
+    cancel_expired_orders()
+  File "C:\Users\LENOVO\orderfood-flask\OrderFood\jobs.py", line 31, in cancel_expired_orders
+    print(f"[CANCEL] order #{o.order_id} quá h\u1ea1n {o.waiting_time} phút")
+  File "C:\Program Files\Python310\lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+UnicodeEncodeError: 'charmap' codec can't encode character '\u1ea1' in position 23: character maps to <undefined>
+127.0.0.1 - - [09/May/2026 18:05:24] "GET /notifications/feed HTTP/1.1" 200 -
+Job "create_app.<locals>._run_job (trigger: interval[0:01:00], next run at: 2026-05-09 18:06:53 +07)" raised an exception
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\orderfood-flask\.venv\lib\site-packages\apscheduler\executors\base.py", line 131, in run_job
+    retval = job.func(*job.args, **job.kwargs)
+  File "C:\Users\LENOVO\orderfood-flask\OrderFood\__init__.py", line 391, in _run_job
+    cancel_expired_orders()
+  File "C:\Users\LENOVO\orderfood-flask\OrderFood\jobs.py", line 31, in cancel_expired_orders
+    print(f"[CANCEL] order #{o.order_id} quá h\u1ea1n {o.waiting_time} phút")
+  File "C:\Program Files\Python310\lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+UnicodeEncodeError: 'charmap' codec can't encode character '\u1ea1' in position 23: character maps to <undefined>
+127.0.0.1 - - [09/May/2026 18:06:24] "GET /notifications/feed HTTP/1.1" 200 -
+Job "create_app.<locals>._run_job (trigger: interval[0:01:00], next run at: 2026-05-09 18:07:53 +07)" raised an exception
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\orderfood-flask\.venv\lib\site-packages\apscheduler\executors\base.py", line 131, in run_job
+    retval = job.func(*job.args, **job.kwargs)
+  File "C:\Users\LENOVO\orderfood-flask\OrderFood\__init__.py", line 391, in _run_job
+    cancel_expired_orders()
+  File "C:\Users\LENOVO\orderfood-flask\OrderFood\jobs.py", line 31, in cancel_expired_orders
+    print(f"[CANCEL] order #{o.order_id} quá h\u1ea1n {o.waiting_time} phút")
+  File "C:\Program Files\Python310\lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+UnicodeEncodeError: 'charmap' codec can't encode character '\u1ea1' in position 23: character maps to <undefined>
+127.0.0.1 - - [09/May/2026 18:07:24] "GET /notifications/feed HTTP/1.1" 200 -
+Job "create_app.<locals>._run_job (trigger: interval[0:01:00], next run at: 2026-05-09 18:08:53 +07)" raised an exception
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\orderfood-flask\.venv\lib\site-packages\apscheduler\executors\base.py", line 131, in run_job
+    retval = job.func(*job.args, **job.kwargs)
+  File "C:\Users\LENOVO\orderfood-flask\OrderFood\__init__.py", line 391, in _run_job
+    cancel_expired_orders()
+  File "C:\Users\LENOVO\orderfood-flask\OrderFood\jobs.py", line 31, in cancel_expired_orders
+    print(f"[CANCEL] order #{o.order_id} quá h\u1ea1n {o.waiting_time} phút")
+  File "C:\Program Files\Python310\lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+UnicodeEncodeError: 'charmap' codec can't encode character '\u1ea1' in position 23: character maps to <undefined>
+127.0.0.1 - - [09/May/2026 18:08:24] "GET /notifications/feed HTTP/1.1" 200 -

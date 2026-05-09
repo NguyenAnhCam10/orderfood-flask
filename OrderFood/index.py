@@ -10,7 +10,7 @@ from OrderFood.customer_service import PHONE_RE, get_user_by_phone, calculate_di
 from OrderFood.dao import *
 from OrderFood.dao_index import get_restaurants_by_name, get_restaurants_by_dishes_name, get_star_display, \
     get_user_by_email, create_user, get_active_cart, add_cart_item, count_cart_items
-from OrderFood.models import Restaurant, Customer, Cart, StatusCart, Role, Category, Dish, RestaurantCategory
+from OrderFood.models import Restaurant, Customer, Cart, StatusCart, Role, Category, Dish, RestaurantCategory, DishStatus
 from sqlalchemy import or_
 import math
 bp = Blueprint("index", __name__)
@@ -330,6 +330,10 @@ def add_to_cart_route():
         customer = Customer.query.filter_by(user_id=user_id).first()
         if not customer:
             return jsonify({"error": "Bạn không phải là khách hàng"}), 403
+
+        dish = Dish.query.get(dish_id)
+        if not dish or dish.status != DishStatus.AVAILABLE:
+            return jsonify({"error": "Món ăn không thể đặt"}), 400
 
         cart = get_active_cart(user_id, restaurant_id)
         if not cart:

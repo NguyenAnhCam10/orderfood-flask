@@ -55,6 +55,12 @@ class StatusRefund(Enum):
     FAILED = "FAILED"
 
 
+class DishStatus(Enum):
+    AVAILABLE = "AVAILABLE"
+    UNAVAILABLE = "UNAVAILABLE"
+    OUT_OF_STOCK = "OUT_OF_STOCK"
+
+
 # =========================
 # USER + ROLES
 # =========================
@@ -179,7 +185,7 @@ class Dish(db.Model):
     res_id       = db.Column(db.Integer, db.ForeignKey("restaurant.restaurant_id"), nullable=False)
     category_id = db.Column(db.Integer, db.ForeignKey("category.category_id"), nullable=True)
     name         = db.Column(db.String(150), nullable=False)
-    is_available = db.Column(db.Boolean, default=True, nullable=False)
+    status       = db.Column(SAEnum(DishStatus, name="dish_status_enum"), nullable=False, default=DishStatus.AVAILABLE)
     price = db.Column(db.Float, nullable=False)
     note = db.Column(db.String(255))
     image = db.Column(db.String(255))  # lưu URL từ Cloudinary

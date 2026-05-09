@@ -1,7 +1,7 @@
 # OrderFood/owner.py
 from flask import Blueprint, render_template, session, redirect, url_for, request, jsonify
 from OrderFood.models import User, Restaurant, Dish, Category, StatusOrder, StatusCart, Refund, Payment, StatusRefund, \
-    Role, Order, StatusRes, StatusPayment
+    Role, Order, StatusRes, StatusPayment, DishStatus
 from OrderFood.dao_index import *
 from OrderFood import db
 from datetime import datetime
@@ -88,7 +88,8 @@ def add_dish():
         note=note,
         category_id=category_id,
         res_id=res_id,
-        image=image_url
+        image=image_url,
+        status=DishStatus.AVAILABLE
     )
     db.session.add(new_dish)
     db.session.commit()
@@ -106,7 +107,7 @@ def add_dish():
         "note": new_dish.note,
         "category": category_name_for_json,
         "image": new_dish.image,
-        "active": new_dish.is_available
+        "status": new_dish.status.value
     }})
 
 @owner_bp.route("/menu/<int:dish_id>", methods=["POST"])
@@ -120,12 +121,15 @@ def edit_dish(dish_id):
         note = request.form.get('note')
         price = request.form.get('price')
         category_name = request.form.get('category')
-        is_available = request.form.get("is_available") == "1"
+        status_val = request.form.get("status", DishStatus.AVAILABLE.value)
         image_url = request.form.get('image_url')
 
         dish.name = name
         dish.note = note
-        dish.is_available = is_available
+        try:
+            dish.status = DishStatus(status_val)
+        except ValueError:
+            dish.status = DishStatus.AVAILABLE
         try:
             dish.price = float(price) if price else 0.0
         except ValueError:
@@ -153,9 +157,29 @@ def edit_dish(dish_id):
                 "price": dish.price,
                 "category": dish.category.name if dish.category else None,
                 "image": dish.image,
-                "is_available": dish.is_available
+                "status": dish.status.value
             }
         })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@owner_bp.route("/menu/<int:dish_id>/status", methods=["PATCH"])
+def toggle_dish_status(dish_id):
+    try:
+        dish = Dish.query.get(dish_id)
+        if not dish:
+            return jsonify({"success": False, "error": "Món ăn không tồn tại"}), 404
+
+        status_val = request.get_json(silent=True, force=True) or {}
+        new_status = status_val.get("status")
+        try:
+            dish.status = DishStatus(new_status)
+        except (ValueError, KeyError):
+            return jsonify({"success": False, "error": f"Status không hợp lệ: {new_status}"}), 400
+
+        db.session.commit()
+        return jsonify({"success": True, "status": dish.status.value})
     except Exception as e:
         db.session.rollback()
         return jsonify({"success": False, "error": str(e)}), 500
