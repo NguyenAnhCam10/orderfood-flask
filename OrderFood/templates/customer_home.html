@@ -43,8 +43,9 @@
         <div class="filter-grid compact-filter-grid">
             <label class="field quick-search-field">
                 <span>Tìm nhanh</span>
-                <input type="text" name="search" value="{{ request.args.get('search','') }}"
-                       class="form-control" placeholder="món ăn, nhà hàng, địa điểm...">
+                <input type="text" id="search-input" name="search" value="{{ request.args.get('search','') }}"
+                       class="form-control" placeholder="món ăn, nhà hàng, địa điểm..."
+                       autocomplete="off">
             </label>
 
             <label class="field rating-field">
@@ -287,5 +288,5 @@ window.addEventListener('load', function() {
 });
 </script>
 
-
+<script src="{{ url_for('static', filename='js/customer/search.js') }}"></script>
 {% endblock %}

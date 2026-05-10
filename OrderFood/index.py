@@ -10,7 +10,7 @@ from OrderFood.customer_service import PHONE_RE, get_user_by_phone, calculate_di
 from OrderFood.dao import *
 from OrderFood.dao_index import get_restaurants_by_name, get_restaurants_by_dishes_name, get_star_display, \
     get_user_by_email, create_user, get_active_cart, add_cart_item, count_cart_items
-from OrderFood.models import Restaurant, Customer, Cart, StatusCart, Role, Category, Dish, RestaurantCategory, DishStatus
+from OrderFood.models import Restaurant, Customer, Cart, StatusCart, Role, Category, Dish, RestaurantCategory, DishStatus, StatusRes
 from sqlalchemy import or_
 import math
 bp = Blueprint("index", __name__)
@@ -86,22 +86,25 @@ def index():
 
     restaurant_query = Restaurant.query
 
-    # [GIỮ NGUYÊN CODE CŨ] --- Xử lý filter keyword, category, rating ---
+    # --- Xử lý filter keyword, category, rating ---
     if keyword:
-        like_keyword = f"%{keyword}%"
-        dish_restaurant_ids = [
-            row[0] for row in Dish.query
-            .filter(Dish.name.ilike(like_keyword))
-            .with_entities(Dish.res_id)
-            .distinct()
-            .all()
-        ]
+        kw_norm = _normalize_text(keyword)
+
+        # Python-side normalized match: gõ "pho" tìm được "Phở", "com" → "Cơm"
+        all_res_rows = db.session.query(
+            Restaurant.restaurant_id, Restaurant.name, Restaurant.address
+        ).all()
+        norm_res_ids = {
+            r[0] for r in all_res_rows
+            if kw_norm in _normalize_text(r[1]) or kw_norm in _normalize_text(r[2] or "")
+        }
+
+        all_dish_rows = db.session.query(Dish.res_id, Dish.name).all()
+        norm_dis_ids = {d[0] for d in all_dish_rows if kw_norm in _normalize_text(d[1])}
+
+        matched_ids = list(norm_res_ids | norm_dis_ids)
         restaurant_query = restaurant_query.filter(
-            or_(
-                Restaurant.name.ilike(like_keyword),
-                Restaurant.address.ilike(like_keyword),
-                Restaurant.restaurant_id.in_(dish_restaurant_ids or [-1]),
-            )
+            Restaurant.restaurant_id.in_(matched_ids or [-1])
         )
 
     if restaurant_category_filter:
@@ -219,6 +222,44 @@ def index():
         per_page=per_page,
         total=total,
     )
+
+
+@bp.route("/api/search/suggest")
+def search_suggest():
+    q = (request.args.get("q") or "").strip()
+    if not q:
+        return jsonify({"restaurants": [], "dishes": []})
+
+    q_norm = _normalize_text(q)
+
+    res_rows = db.session.query(
+        Restaurant.restaurant_id, Restaurant.name, Restaurant.address
+    ).filter(Restaurant.status == StatusRes.APPROVED).all()
+
+    matched_restaurants = []
+    for r in res_rows:
+        if q_norm in _normalize_text(r[1]) or q_norm in _normalize_text(r[2] or ""):
+            matched_restaurants.append({"id": r[0], "name": r[1]})
+        if len(matched_restaurants) >= 6:
+            break
+
+    dish_rows = db.session.query(Dish.res_id, Dish.name).filter(
+        Dish.status != DishStatus.UNAVAILABLE
+    ).all()
+
+    matched_dishes = []
+    seen = set()
+    for d in dish_rows:
+        name = d[1]
+        if q_norm in _normalize_text(name) and name not in seen:
+            matched_dishes.append({"name": name, "res_id": d[0]})
+            seen.add(name)
+        if len(matched_dishes) >= 6:
+            break
+
+    return jsonify({"restaurants": matched_restaurants, "dishes": matched_dishes})
+
+
 @bp.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
