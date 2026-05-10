@@ -6,7 +6,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask import Blueprint
 # from OrderFood import db
 from OrderFood.extensions import db
-from OrderFood.customer_service import PHONE_RE, get_user_by_phone, calculate_distance
+from OrderFood.customer_service import PHONE_RE, get_user_by_phone, calculate_distance, is_restaurant_open
 from OrderFood.dao import *
 from OrderFood.dao_index import get_restaurants_by_name, get_restaurants_by_dishes_name, get_star_display, \
     get_user_by_email, create_user, get_active_cart, add_cart_item, count_cart_items
@@ -202,7 +202,8 @@ def index():
         {
             "restaurant": r,
             "stars": get_star_display(r.rating_point or 0),
-            "distance": getattr(r, 'distance', None)  # Lấy khoảng cách đã tính ở trên
+            "distance": getattr(r, 'distance', None),
+            "is_open": is_restaurant_open(r),
         }
         for r in restaurants_page
     ]
